@@ -9,48 +9,84 @@
   --primary-color: #030629;
   --secondary-color: #1c1f3e;
   --accent-color: #999;
-  --background: #f9f9f9
+  --background: #f9f9f9;
+  --white: #f9f9f9;
 }
 
-body{
+body {
   background-color: var(--background);
 }
 
-.bg-primary{
+.bg-primary {
   background-color: var(--primary-color);
 }
 
-.bg-secondary{
+.text-primary {
+  color: var(--primary-color);
+}
+
+.bg-secondary {
   background-color: var(--secondary-color);
 }
 
-.top-40{
+.text-secondary {
+  color: var(--secondary-color);
+}
+
+.btn-secondary {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-color);
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+.top-40 {
   top: 40px;
 }
 
-.header-top{
+.header-top {
   background-color: var(--accent-color);
   font-size: 12px;
 }
 
-.header-top .currency-icon{
+.header-top .currency-icon {
   font-size: 10px;
 }
 
-.header-top svg{
+.header-top svg {
   font-size: 18px;
 }
 
-.header-logo{
+.header-logo {
   width: 180px;
 }
 
-a:hover{
-  text-decoration: none;
-}
-
-.cart-icon span{
+.cart-icon span {
   font-size: 12px;
   height: 18px;
   width: 18px;
+}
+
+@media (max-width: 767px) {
+  .products-filter-sidebar {
+    display: none;
+  }
+
+  .products-filter-sidebar.expanded {
+    display: block !important;
+  }
+}
+
+.products-filter-sidebar-bg {
+  background: #06060691;
 }

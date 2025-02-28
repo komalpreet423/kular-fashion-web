@@ -78,24 +78,24 @@ const Header = () => {
       </div>
 
       <header className={`transition-all duration-300 bg-white ease-in-out ${isSticky ? 'fixed top-0 left-0 w-full bg-white shadow-md z-50' : ''}`}>
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between uppercase">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           {/* Logo and Navigation Links */}
-          <div className="flex items-center space-x-6 py-2">
-            <div className="text-xl font-bold">
+          <div className="flex items-center space-x-6">
+            <div className="text-xl font-bold py-2">
               <a href="">
                 <img src="/logo.png" className='header-logo' alt="" />
               </a>
             </div>
 
             {/* Navigation Links */}
-            <nav className="hidden md:flex space-x-6 relative">
+            <nav className="hidden md:flex space-x-6 relative uppercase">
               <a href="/" className="hover:text-gray-600">Home</a>
 
               {/* Men Link with Mega Menu for Fashion Categories */}
               <div className="relative group">
                 <a href="#" className="flex items-center hover:text-gray-600">Men <FaChevronDown className='ml-1 text-gray-600 text-xs' /></a>
                 {/* Mega Menu Dropdown */}
-                <div className="absolute left-0 hidden group-hover:block group-hover:opacity-100 mt-0 w-96 p-4 bg-white shadow-lg opacity-0 transition-opacity duration-300 ease-in-out">
+                <div className="absolute left-0 hidden group-hover:block z-40 group-hover:opacity-100 mt-0 w-96 p-4 bg-white shadow-lg opacity-0 transition-opacity duration-300 ease-in-out">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <h3 className="font-semibold">Shirts</h3>
@@ -127,7 +127,7 @@ const Header = () => {
               <div className="relative group">
                 <a href="#" className="flex items-center hover:text-gray-600">Women <FaChevronDown className='ml-1 text-gray-600 text-xs' /></a>
                 {/* Mega Menu Dropdown */}
-                <div className="absolute left-0 hidden group-hover:block group-hover:opacity-100 mt-0 w-96 p-4 bg-white shadow-lg opacity-0 transition-opacity duration-300 ease-in-out">
+                <div className="absolute z-40 left-0 hidden group-hover:block group-hover:opacity-100 mt-0 w-96 p-4 bg-white shadow-lg opacity-0 transition-opacity duration-300 ease-in-out">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <h3 className="font-semibold">Shirts</h3>
@@ -159,7 +159,7 @@ const Header = () => {
               <div className="relative group">
                 <a href="#" className="flex items-center hover:text-gray-600">Kids <FaChevronDown className='ml-1 text-gray-600 text-xs' /></a>
                 {/* Mega Menu Dropdown */}
-                <div className="absolute left-0 hidden group-hover:block group-hover:opacity-100 mt-0 w-96 p-4 bg-white shadow-lg opacity-0 transition-opacity duration-300 ease-in-out">
+                <div className="absolute left-0 z-40 hidden group-hover:block group-hover:opacity-100 mt-0 w-96 p-4 bg-white shadow-lg opacity-0 transition-opacity duration-300 ease-in-out">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <h3 className="font-semibold">Shirts</h3>
@@ -204,14 +204,95 @@ const Header = () => {
               </span>
             </div>
 
-
-            <a href="/cart" className="relative hover:text-gray-600 cart-icon">
+            {/* Cart icon wrapped in a group */}
+            <a href="/cart" className="relative group hover:text-gray-600 cart-icon">
               <BsCart className="text-2xl" />
 
               {/* Conditionally render cart count if greater than 0 */}
               <span className="absolute top-[-5px] right-[-5px] font-bold text-white bg-primary rounded-full flex items-center justify-center">
                 0
               </span>
+
+              {/* Mini Cart shown when hovered */}
+              <div className="absolute right-0 mt-0 w-72 bg-white rounded-lg shadow-lg p-4 z-10 opacity-0 group-hover:opacity-100 group-hover:block hidden transition-opacity duration-300 peer group-hover:peer opacity-100 peer-hover:block">
+                <h3 className="text-lg font-semibold">Your Cart</h3>
+                <div className="dropdown-cart-products space-y-4">
+                  <ul>
+                    <li className="w-full h-full flex">
+                      <div className="flex space-x-[6px] justify-center items-center my-[20px]">
+                        <div className="w-[65px] h-full">
+                          <img
+                            src="https://portotheme.com/html/molla/assets/images/products/product-4.jpg"
+                            alt=""
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 h-full flex flex-col justify-center ">
+                          <p className="title mb-2 text-[13px] font-600 text-qblack leading-4 line-clamp-2 hover:text-blue-600">
+                            iPhone 12 Pro Max 128GB Golen colour
+                          </p>
+                          <p className="price">
+                            <span className="offer-price text-qred font-600 text-[15px] ml-2">
+                              $38
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <span className="mt-[20px] mr-[15px] inline-flex cursor-pointer ">
+                        <svg
+                          width={8}
+                          height={8}
+                          viewBox="0 0 8 8"
+                          fill="none"
+                          className="inline fill-current text-[#AAAAAA] hover:text-qred"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M7.76 0.24C7.44 -0.08 6.96 -0.08 6.64 0.24L4 2.88L1.36 0.24C1.04 -0.08 0.56 -0.08 0.24 0.24C-0.08 0.56 -0.08 1.04 0.24 1.36L2.88 4L0.24 6.64C-0.08 6.96 -0.08 7.44 0.24 7.76C0.56 8.08 1.04 8.08 1.36 7.76L4 5.12L6.64 7.76C6.96 8.08 7.44 8.08 7.76 7.76C8.08 7.44 8.08 6.96 7.76 6.64L5.12 4L7.76 1.36C8.08 1.04 8.08 0.56 7.76 0.24Z" />
+                        </svg>
+                      </span>
+                    </li>
+                    <li className="w-full h-full flex">
+                      <div className="flex space-x-[6px] justify-center items-center my-[20px]">
+                        <div className="w-[65px] h-full">
+                          <img
+                            src="https://portotheme.com/html/molla/assets/images/products/product-4.jpg"
+                            alt=""
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 h-full flex flex-col justify-center ">
+                          <p className="title mb-2 text-[13px] font-600 text-qblack leading-4 line-clamp-2 hover:text-blue-600">
+                            iPhone 12 Pro Max 128GB Golen colour
+                          </p>
+                          <p className="price">
+                            <span className="offer-price text-qred font-600 text-[15px] ml-2">
+                              $38
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <span className="mt-[20px] mr-[15px] inline-flex cursor-pointer ">
+                        <svg
+                          width={8}
+                          height={8}
+                          viewBox="0 0 8 8"
+                          fill="none"
+                          className="inline fill-current text-[#AAAAAA] hover:text-qred"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M7.76 0.24C7.44 -0.08 6.96 -0.08 6.64 0.24L4 2.88L1.36 0.24C1.04 -0.08 0.56 -0.08 0.24 0.24C-0.08 0.56 -0.08 1.04 0.24 1.36L2.88 4L0.24 6.64C-0.08 6.96 -0.08 7.44 0.24 7.76C0.56 8.08 1.04 8.08 1.36 7.76L4 5.12L6.64 7.76C6.96 8.08 7.44 8.08 7.76 7.76C8.08 7.44 8.08 6.96 7.76 6.64L5.12 4L7.76 1.36C8.08 1.04 8.08 0.56 7.76 0.24Z" />
+                        </svg>
+                      </span>
+                    </li>
+
+                  </ul>
+                </div>
+
+                <div className="mt-2 text-center">
+                  <a href="/cart" className="text-primary">Go to Cart</a>
+                </div>
+              </div>
+
             </a>
           </div>
 
