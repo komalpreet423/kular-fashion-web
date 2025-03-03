@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '@/components/global/header';
 import { MdFilterAlt } from "react-icons/md";
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -107,7 +106,6 @@ export default function ProductsPage() {
 
     return (
         <>
-            <Header />
             <div className="flex flex-col md:flex-row gap-4 p-4">
                 <div className="w-full md:w-1/4">
                     {/* Apply Filters button on mobile */}

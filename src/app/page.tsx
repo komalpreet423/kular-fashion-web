@@ -11,7 +11,7 @@ import SubscribeNewsletter from '@/components/global/subscribe-newsletter';
 export default function HomePage() {
   return (
     <>
-      <Header />
+     
       <div className="w-full">
         <HeroSection />
         <FeaturedCategories />
