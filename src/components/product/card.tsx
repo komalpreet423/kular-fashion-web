@@ -37,17 +37,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, descr
                     </motion.div>
 
                     <motion.div className="transition-transform duration-300 transform hover:scale-110">
-                        <Image
-                            src={image}
-                            alt={name}
-                            width={300}
-                            height={350}
-                            className="w-full h-64 object-cover"
-                        />
+                        <Link href={`/product/${id}`}>
+                            <Image
+                                src={image}
+                                alt={name}
+                                width={300}
+                                height={350}
+                                className="w-full h-64 object-cover"
+                            />
+                        </Link>
                     </motion.div>
                 </div>
                 <CardContent className="px-4 pb-2">
-                    <Link href={`/description/${id}`}>
+                    <Link href={`/product/${id}`}>
                         <p className="text-gray-500 my-0 text-sm cursor-pointer">{description}</p>
                     </Link>
 
@@ -55,7 +57,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, descr
                         <h5 className="text-md font-semibold text-gray-800 cursor-pointer">{name}</h5>
                     </Link>
 
-                    <Link href={`/pricing/${id}`}>
+                    <Link href={`/product/${id}`}>
                         <p className="text-gray-900 text-sm cursor-pointer">£{price}</p>
                     </Link>
                 </CardContent>

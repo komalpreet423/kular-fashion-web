@@ -5,7 +5,7 @@ import HeroSection from '@/components/home/hero-section';
 import FeaturedCategories from '@/components/home/featured-categories';
 import Testimonials from '@/components/home/testimonials';
 import Brands from '@/components/home/brands';
-import ProductShowcase from '@/components/home/new-arrivals';
+import NewArrivals from '@/components/home/new-arrivals';
 import SubscribeNewsletter from '@/components/global/subscribe-newsletter';
 
 export default function HomePage() {
@@ -17,7 +17,7 @@ export default function HomePage() {
         <FeaturedCategories />
         <Testimonials />
         <Brands />
-        <ProductShowcase />
+        <NewArrivals />
         <SubscribeNewsletter />
       </div>
     </>
