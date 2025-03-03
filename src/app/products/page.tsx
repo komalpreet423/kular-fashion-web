@@ -11,6 +11,8 @@ import ProductCard from '@/components/product/card';
 import { motion } from 'framer-motion';
 import { SlArrowDown, SlArrowUp } from 'react-icons/sl';
 import { Pagination, PaginationContent, PaginationItem } from '@/components/ui/pagination';
+import { IoCloseSharp } from 'react-icons/io5';
+import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Product {
     id: number;
@@ -58,6 +60,12 @@ export default function ProductsPage() {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 2;
+    const [sortOption, setSortOption] = useState<string>('Price: Low to High');
+
+    const handleSortChange = (option: string) => {
+      setSortOption(option);
+      // Add your sorting logic here based on the selected option
+    };
 
     const toggleSelection = <T,>(selected: T[], setSelected: (value: T[]) => void, value: T) => {
         setSelected(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
@@ -85,11 +93,23 @@ export default function ProductsPage() {
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     const displayedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+    const handleRemoveCategory = (category: string) => {
+        setSelectedCategories(selectedCategories.filter(item => item !== category));
+    };
+
+    const handleRemoveSize = (size: Size) => {
+        setSelectedSizes(selectedSizes.filter(item => item !== size));
+    };
+
+    const handleRemoveColor = (color: Color) => {
+        setSelectedColors(selectedColors.filter(item => item !== color));
+    };
+
     return (
         <>
             <Header />
             <div className="flex flex-col md:flex-row gap-4 p-4">
-                <div className="w-full md:w-1/4 p-4 border rounded-lg shadow-sm bg-white">
+                <div className="w-full md:w-1/4 p-4 rounded-lg shadow-lg bg-white">
                     {['categories', 'sizes', 'colors', 'price'].map((filter) => (
                         <div key={filter} className="mb-4">
                             <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
@@ -116,14 +136,137 @@ export default function ProductsPage() {
                                 </div>
                             )}
                             {filter === 'price' && filterOpen.price && (
-                                <Slider min={0} max={200} step={10} value={[minPrice, maxPrice]} onValueChange={(val) => { setMinPrice(val[0]); setMaxPrice(val[1]); }} />
-                            )}
+                                <div className="mt-2">
+                                    <Slider min={0} max={200} step={10} value={[minPrice, maxPrice]} onValueChange={(val) => { setMinPrice(val[0]); setMaxPrice(val[1]); }} />
+
+                                    <div className="flex justify-between">
+                                        <span>£{minPrice}</span>
+                                        <span>£{maxPrice}</span>
+                                    </div>
+                                </div>)}
                         </div>
                     ))}
                 </div>
 
-                <div className="w-full md:w-3/4">
-                    <Button onClick={resetFilters} className=" mt-4">Clear Filters</Button>
+                <div className="w-full w-3/4 md:w-3/4">
+                    <div className='flex justify-between mb-2'>
+                        <h4 className='text-lg'>3 Products</h4>
+                        <div>
+                            <p>Sort by: {sortOption}</p>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="btn">Sort Products</button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onClick={() => handleSortChange('Price: Low to High')}>Price: Low to High</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleSortChange('Price: High to Low')}>Price: High to Low</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleSortChange('Rating: High to Low')}>Rating: High to Low</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleSortChange('Availability: In Stock')}>Availability: In Stock</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+
+                    {/* Show Selected Filters */}
+                    {filteredProducts.length !== products.length && (
+                        <div className="mb-4">
+                            <div className="flex flex-wrap gap-3 mt-2">
+                                {/* Categories */}
+                                {selectedCategories.map((category) => (
+                                    <div
+                                        key={category}
+                                        className="flex items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    >
+                                        <span className="text-sm text-gray-800 dark:text-gray-200">{category}</span>
+                                        <motion.button
+                                            className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                                            onClick={() => handleRemoveCategory(category)}
+                                            whileHover={{ scale: 1.2 }} // Scale up on hover
+                                            whileTap={{ scale: 0.9 }} // Scale down on click
+                                            animate={{ opacity: 1 }} // Ensure button is visible
+                                            initial={{ opacity: 0 }} // Start with opacity 0, fade in on hover
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <IoCloseSharp />
+                                        </motion.button>
+                                    </div>
+                                ))}
+
+                                {/* Sizes */}
+                                {selectedSizes.map((size) => (
+                                    <div
+                                        key={size}
+                                        className="flex items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    >
+                                        <span className="text-sm text-gray-800 dark:text-gray-200">{size}</span>
+                                        <motion.button
+                                            className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                                            onClick={() => handleRemoveSize(size)}
+                                            whileHover={{ scale: 1.2 }} // Scale up on hover
+                                            whileTap={{ scale: 0.9 }} // Scale down on click
+                                            animate={{ opacity: 1 }} // Ensure button is visible
+                                            initial={{ opacity: 0 }} // Start with opacity 0, fade in on hover
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <IoCloseSharp />
+                                        </motion.button>
+                                    </div>
+                                ))}
+
+                                {/* Colors */}
+                                {selectedColors.map((color) => (
+                                    <div
+                                        key={color}
+                                        className="flex items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    >
+                                        <span
+                                            style={{ backgroundColor: color }}
+                                            className="py-2.5 px-4 rounded-lg text-white font-bold"
+                                        ></span>
+
+                                        <motion.button
+                                            className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                                            onClick={() => handleRemoveColor(color)}
+                                            whileHover={{ scale: 1.2 }} // Scale up on hover
+                                            whileTap={{ scale: 0.9 }} // Scale down on click
+                                            animate={{ opacity: 1 }} // Ensure button is visible
+                                            initial={{ opacity: 0 }} // Start with opacity 0, fade in on hover
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <IoCloseSharp />
+                                        </motion.button>
+                                    </div>
+                                ))}
+
+                                {/* Price Filter */}
+                                {minPrice > 0 && maxPrice < 200 && (
+                                    <div
+                                        className="flex items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    >
+                                        <span className="text-sm text-gray-800 dark:text-gray-200">
+                                            {`$${minPrice} - $${maxPrice}`}
+                                        </span>
+
+                                        <button
+                                            className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300"
+                                            onClick={resetFilters}
+                                        >
+                                            <IoCloseSharp />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Clear Filters Button */}
+                                <Button
+                                    onClick={resetFilters}
+                                    size="md"
+                                    variant={'ghost'}
+                                >
+                                    Clear Filters
+                                </Button>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {displayedProducts.length > 0 ? displayedProducts.map((product) => (

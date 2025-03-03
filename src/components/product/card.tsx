@@ -56,7 +56,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, descr
                     </Link>
 
                     <Link href={`/pricing/${id}`}>
-                        <p className="text-gray-900 text-sm cursor-pointer">${price}</p>
+                        <p className="text-gray-900 text-sm cursor-pointer">£{price}</p>
                     </Link>
                 </CardContent>
             </Card>
