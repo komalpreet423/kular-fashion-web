@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import Header from '@/components/global/header';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { MdFilterAlt } from "react-icons/md";
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import ProductCard from '@/components/product/card';
@@ -13,6 +12,7 @@ import { SlArrowDown, SlArrowUp } from 'react-icons/sl';
 import { Pagination, PaginationContent, PaginationItem } from '@/components/ui/pagination';
 import { IoCloseSharp } from 'react-icons/io5';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface Product {
     id: number;
@@ -63,8 +63,8 @@ export default function ProductsPage() {
     const [sortOption, setSortOption] = useState<string>('Price: Low to High');
 
     const handleSortChange = (option: string) => {
-      setSortOption(option);
-      // Add your sorting logic here based on the selected option
+        setSortOption(option);
+        // Add your sorting logic here based on the selected option
     };
 
     const toggleSelection = <T,>(selected: T[], setSelected: (value: T[]) => void, value: T) => {
@@ -109,53 +109,114 @@ export default function ProductsPage() {
         <>
             <Header />
             <div className="flex flex-col md:flex-row gap-4 p-4">
-                <div className="w-full md:w-1/4 p-4 rounded-lg shadow-lg bg-white">
-                    {['categories', 'sizes', 'colors', 'price'].map((filter) => (
-                        <div key={filter} className="mb-4">
-                            <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
-                                <h3 className="text-md font-medium capitalize">{filter}</h3>
-                                <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
-                            </div>
-                            {filter === 'categories' && filterOpen.categories && categories.map((category) => (
-                                <div key={category} className="flex items-center space-x-2 mt-2">
-                                    <Checkbox id={category} checked={selectedCategories.includes(category)} onCheckedChange={() => toggleSelection(selectedCategories, setSelectedCategories, category)} />
-                                    <label htmlFor={category} className="text-sm cursor-pointer">{category}</label>
-                                </div>
-                            ))}
-                            {filter === 'sizes' && filterOpen.sizes && sizes.map((size) => (
-                                <div key={size} className="flex items-center space-x-2 mt-2">
-                                    <Checkbox id={size} checked={selectedSizes.includes(size)} onCheckedChange={() => toggleSelection(selectedSizes, setSelectedSizes, size)} />
-                                    <label htmlFor={size} className="text-sm cursor-pointer">{size}</label>
-                                </div>
-                            ))}
-                            {filter === 'colors' && filterOpen.colors && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {colors.map((color) => (
-                                        <button key={color} className={`w-6 h-6 rounded-full border ${selectedColors.includes(color) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color }} onClick={() => toggleSelection(selectedColors, setSelectedColors, color)} />
+                <div className="w-full md:w-1/4">
+                    {/* Apply Filters button on mobile */}
+                    <div className="md:hidden">
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button size={'sm'} className='rounded-none ml-auto'>
+                                    <MdFilterAlt /> Apply Filters
+                                </Button>
+                            </SheetTrigger>
+
+
+                            <SheetContent side="right">
+                                <SheetHeader>
+                                    <SheetTitle>Filters</SheetTitle>
+                                    <SheetDescription>Apply your filter preferences</SheetDescription>
+                                </SheetHeader>
+
+                                <div className="px-3">
+                                    {['categories', 'sizes', 'colors', 'price'].map((filter) => (
+                                        <div key={filter} className="mb-4">
+                                            <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
+                                                <h3 className="text-md font-medium capitalize">{filter}</h3>
+                                                <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
+                                            </div>
+                                            {filter === 'categories' && filterOpen.categories && categories.map((category) => (
+                                                <div key={category} className="flex items-center space-x-2 mt-2">
+                                                    <Checkbox id={category} checked={selectedCategories.includes(category)} onCheckedChange={() => toggleSelection(selectedCategories, setSelectedCategories, category)} />
+                                                    <label htmlFor={category} className="text-sm cursor-pointer">{category}</label>
+                                                </div>
+                                            ))}
+                                            {filter === 'sizes' && filterOpen.sizes && sizes.map((size) => (
+                                                <div key={size} className="flex items-center space-x-2 mt-2">
+                                                    <Checkbox id={size} checked={selectedSizes.includes(size)} onCheckedChange={() => toggleSelection(selectedSizes, setSelectedSizes, size)} />
+                                                    <label htmlFor={size} className="text-sm cursor-pointer">{size}</label>
+                                                </div>
+                                            ))}
+                                            {filter === 'colors' && filterOpen.colors && (
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {colors.map((color) => (
+                                                        <button key={color} className={`w-6 h-6 rounded-full border ${selectedColors.includes(color) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color }} onClick={() => toggleSelection(selectedColors, setSelectedColors, color)} />
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {filter === 'price' && filterOpen.price && (
+                                                <div className="mt-2">
+                                                    <Slider min={0} max={200} step={10} value={[minPrice, maxPrice]} onValueChange={(val) => { setMinPrice(val[0]); setMaxPrice(val[1]); }} />
+                                                    <div className="flex justify-between">
+                                                        <span>£{minPrice}</span>
+                                                        <span>£{maxPrice}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
-                            )}
-                            {filter === 'price' && filterOpen.price && (
-                                <div className="mt-2">
-                                    <Slider min={0} max={200} step={10} value={[minPrice, maxPrice]} onValueChange={(val) => { setMinPrice(val[0]); setMaxPrice(val[1]); }} />
+                            </SheetContent>
+                        </Sheet>
+                    </div>
 
-                                    <div className="flex justify-between">
-                                        <span>£{minPrice}</span>
-                                        <span>£{maxPrice}</span>
+                    {/* Filter panel */}
+                    <div className="hidden md:block  rounded-lg shadow-lg bg-white  p-4">
+                        {['categories', 'sizes', 'colors', 'price'].map((filter) => (
+                            <div key={filter} className="mb-4">
+                                <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
+                                    <h3 className="text-md font-medium capitalize">{filter}</h3>
+                                    <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
+                                </div>
+                                {filter === 'categories' && filterOpen.categories && categories.map((category) => (
+                                    <div key={category} className="flex items-center space-x-2 mt-2">
+                                        <Checkbox id={category} checked={selectedCategories.includes(category)} onCheckedChange={() => toggleSelection(selectedCategories, setSelectedCategories, category)} />
+                                        <label htmlFor={category} className="text-sm cursor-pointer">{category}</label>
                                     </div>
-                                </div>)}
-                        </div>
-                    ))}
+                                ))}
+                                {filter === 'sizes' && filterOpen.sizes && sizes.map((size) => (
+                                    <div key={size} className="flex items-center space-x-2 mt-2">
+                                        <Checkbox id={size} checked={selectedSizes.includes(size)} onCheckedChange={() => toggleSelection(selectedSizes, setSelectedSizes, size)} />
+                                        <label htmlFor={size} className="text-sm cursor-pointer">{size}</label>
+                                    </div>
+                                ))}
+                                {filter === 'colors' && filterOpen.colors && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {colors.map((color) => (
+                                            <button key={color} className={`w-6 h-6 rounded-full border ${selectedColors.includes(color) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color }} onClick={() => toggleSelection(selectedColors, setSelectedColors, color)} />
+                                        ))}
+                                    </div>
+                                )}
+                                {filter === 'price' && filterOpen.price && (
+                                    <div className="mt-2">
+                                        <Slider min={0} max={200} step={10} value={[minPrice, maxPrice]} onValueChange={(val) => { setMinPrice(val[0]); setMaxPrice(val[1]); }} />
+                                        <div className="flex justify-between">
+                                            <span>£{minPrice}</span>
+                                            <span>£{maxPrice}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
+
 
                 <div className="w-full w-3/4 md:w-3/4">
                     <div className='flex justify-between mb-2'>
                         <h4 className='text-lg'>3 Products</h4>
                         <div>
-                            <p>Sort by: {sortOption}</p>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button className="btn">Sort Products</button>
+                                    <Button variant={'secondary'} size={'sm'}>Sort By: {sortOption}</Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <DropdownMenuItem onClick={() => handleSortChange('Price: Low to High')}>Price: Low to High</DropdownMenuItem>
@@ -276,38 +337,40 @@ export default function ProductsPage() {
                         )) : <p className="col-span-full text-center">No products found</p>}
                     </div>
 
-                    <Pagination className="mt-4">
-                        <PaginationContent>
-                            <PaginationItem>
-                                <button
-                                    className="px-3 py-1 rounded-md disabled:opacity-50"
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage((prev) => prev - 1)}
-                                >
-                                    Previous
-                                </button>
-                            </PaginationItem>
-                            {[...Array(totalPages)].map((_, index) => (
-                                <PaginationItem key={index}>
+                    <div className='flex'>
+                        <Pagination className="mt-4">
+                            <PaginationContent>
+                                <PaginationItem>
                                     <button
-                                        className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
-                                        onClick={() => setCurrentPage(index + 1)}
+                                        className="px-3 py-1 rounded-md disabled:opacity-50"
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage((prev) => prev - 1)}
                                     >
-                                        {index + 1}
+                                        Previous
                                     </button>
                                 </PaginationItem>
-                            ))}
-                            <PaginationItem>
-                                <button
-                                    className="px-3 py-1 rounded-md disabled:opacity-50"
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage((prev) => prev + 1)}
-                                >
-                                    Next
-                                </button>
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
+                                {[...Array(totalPages)].map((_, index) => (
+                                    <PaginationItem key={index}>
+                                        <button
+                                            className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+                                            onClick={() => setCurrentPage(index + 1)}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <button
+                                        className="px-3 py-1 rounded-md disabled:opacity-50"
+                                        disabled={currentPage === totalPages}
+                                        onClick={() => setCurrentPage((prev) => prev + 1)}
+                                    >
+                                        Next
+                                    </button>
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
                 </div>
             </div>
         </>
