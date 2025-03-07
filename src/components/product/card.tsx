@@ -6,16 +6,28 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { useState } from 'react';
 import Link from 'next/link';
+import { config } from '@/config';
 
 type ProductCardProps = {
     id: number;
+    slug: string;
     name: string;
     price: number;
-    image: string;
-    description: string;
+    sale_price: number;
+    default_image: string;
+    brand: {
+        name: string;
+    }
 };
 
-const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, description }) => {
+const ProductCard: React.FC<ProductCardProps> = ({
+    slug,
+    name,
+    price,
+    sale_price,
+    default_image,
+    brand
+}) => {
     const [isFavorited, setIsFavorited] = useState(false);
 
     return (
@@ -23,7 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, descr
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
         >
-            <Card className="p-0 gap-2 shadow-md rounded-xl overflow-hidden relative">
+            <Card className="p-0 gap-2 shadow-md rounded-none overflow-hidden relative">
                 <div className="relative overflow-hidden rounded-t-xl">
                     {/* Wishlist Icon inside the image container */}
                     <motion.div
@@ -37,27 +49,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, descr
                     </motion.div>
 
                     <motion.div className="transition-transform duration-300 transform hover:scale-110">
-                        <Link href={`/product/${id}`}>
+                        <Link href={`/product/${slug}`}>
                             <Image
-                                src={image}
+                                src={config.apiBaseRoot+default_image}
                                 alt={name}
                                 width={300}
                                 height={350}
                                 className="w-full h-64 object-cover"
+                                priority 
                             />
                         </Link>
                     </motion.div>
                 </div>
                 <CardContent className="px-4 pb-2">
-                    <Link href={`/product/${id}`}>
-                        <p className="text-gray-500 my-0 text-sm cursor-pointer">{description}</p>
+                    <Link href={`/product/${slug}`}>
+                        <p className="text-gray-500 my-0 text-sm cursor-pointer">{brand.name}</p>
                     </Link>
 
-                    <Link href={`/product/${id}`}>
+                    <Link href={`/product/${slug}`}>
                         <h5 className="text-md font-semibold text-gray-800 cursor-pointer">{name}</h5>
                     </Link>
 
-                    <Link href={`/product/${id}`}>
+                    <Link href={`/product/${slug}`}>
                         <p className="text-gray-900 text-sm cursor-pointer">£{price}</p>
                     </Link>
                 </CardContent>
