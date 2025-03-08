@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/product/card';
 import { motion } from 'framer-motion';
@@ -12,6 +12,7 @@ import Error500 from '@/components/errors/500';
 import FilterSidebar from '@/components/product/filter-sidebar';
 import NoProductsFound from '@/components/product/not-found';
 import { Skeleton } from '@/components/ui/skeleton';
+import { debounce } from 'lodash';
 
 interface Product {
     id: number;
@@ -84,10 +85,28 @@ export default function ProductsPage() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<Boolean>(true);
 
+    const memoizedSelectedFilters = useMemo(() => selectedFilters, [
+        JSON.stringify(selectedFilters.categories),
+        JSON.stringify(selectedFilters.sizes),
+        JSON.stringify(selectedFilters.colors),
+        selectedFilters.price.min,
+        selectedFilters.price.max,
+    ]);
+
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${config.apiBaseUrl}products?per_page=${perPage}&page=${currentPage}`);
+            const queryParams = new URLSearchParams({
+                per_page: perPage.toString(),
+                page: currentPage.toString(),
+                categories: selectedFilters.categories.join(','),
+                sizes: selectedFilters.sizes.join(','),
+                colors: selectedFilters.colors.join(','),
+                min_price: selectedFilters.price.min.toString(),
+                max_price: selectedFilters.price.max.toString(),
+            });
+
+            const res = await fetch(`${config.apiBaseUrl}products?${queryParams}`);
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
@@ -95,22 +114,6 @@ export default function ProductsPage() {
             const data = await res.json();
             setProducts(data.data);
             setFilters(data.filters);
-
-            const price = {
-                min: parseFloat(data.filters.price.min),
-                max: parseFloat(data.filters.price.max),
-            };
-
-            setFilters({
-                ...data.filters,
-                price,
-            });
-
-            setSelectedFilters({
-                ...selectedFilters,
-                price,
-            });
-
             setError(null);
             setPagination(data.pagination);
         } catch (error) {
@@ -120,23 +123,16 @@ export default function ProductsPage() {
         }
     };
 
-    useEffect(() => {
-        fetchProducts();
-    }, [currentPage]);
 
-    const [filterOpen, setFilterOpen] = useState({
-        categories: true,
-        sizes: true,
-        colors: true,
-        price: true,
-    });
+    const debouncedFetchProducts = debounce(fetchProducts, 300);
+
+    useEffect(() => {
+        debouncedFetchProducts();
+        return () => debouncedFetchProducts.cancel();
+    }, [currentPage, memoizedSelectedFilters]);
 
     const handleSortChange = (option: string) => {
         // Add your sorting logic here based on the selected option
-    };
-
-    const toggleSelection = <T,>(selected: T[], setSelected: (value: T[]) => void, value: T) => {
-        setSelected(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
     };
 
     const resetFilters = () => {
@@ -189,7 +185,7 @@ export default function ProductsPage() {
                 <Error500 error={error} tryAgain={fetchProducts} />
                 : <>
                     <div className='w-full md:w-1/4'>
-                        {loading ? (
+                        {loading && !isAnyFilterSelected ? (
                             <div className="space-y-6 px-6">
                                 <FiltersSkeleton />
                                 <FiltersSkeleton />
@@ -292,7 +288,7 @@ export default function ProductsPage() {
                                     </motion.div>
                                 ))}
                             </div>
-                            
+
                             {pagination && pagination.last_page > 1 && (
                                 <div className='flex'>
                                     <Pagination className="mt-4">
