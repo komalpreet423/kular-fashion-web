@@ -45,7 +45,6 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
         return selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value];
     };
 
-    // Helper function to check if a filter section should be shown
     const shouldShowFilterSection = (filter: keyof typeof filters) => {
         switch (filter) {
             case 'product_types':
@@ -61,106 +60,102 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
         }
     };
 
-    return (
-        <div className="w-full md:w-1/4">
-            <div className="md:hidden">
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button size={'sm'} className='rounded-none ml-auto'>
-                            <MdFilterAlt /> Apply Filters
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right">
-                        <SheetHeader>
-                            <SheetTitle>Filters</SheetTitle>
-                            <SheetDescription>Apply your filter preferences</SheetDescription>
-                        </SheetHeader>
-                        <div className="px-3">
-                            {['categories', 'sizes', 'colors', 'price'].map((filter) => (
-                                shouldShowFilterSection(filter as keyof typeof filters) && (
-                                    <div key={filter} className="mb-4">
-                                        <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
-                                            <h3 className="text-md font-medium capitalize">{filter}</h3>
-                                            <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
+    return (<>
+        <div className="md:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button size={'sm'} className='rounded-none ml-auto'>
+                        <MdFilterAlt /> Apply Filters
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                    <SheetHeader>
+                        <SheetTitle>Filters</SheetTitle>
+                        <SheetDescription>Apply your filter preferences</SheetDescription>
+                    </SheetHeader>
+                    <div className="px-3">
+                        {['categories', 'sizes', 'colors', 'price'].map((filter) => (
+                            shouldShowFilterSection(filter as keyof typeof filters) && (
+                                <div key={filter} className="mb-4">
+                                    <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
+                                        <h3 className="text-md font-medium capitalize">{filter}</h3>
+                                        <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
+                                    </div>
+                                    {filter === 'categories' && filterOpen.categories && filters.product_types.map((category) => (
+                                        <div key={`category-m-${category.id}`} className="flex items-center space-x-2 mt-2">
+                                            <Checkbox id={`category-m-${category.id}`} checked={selectedFilters.categories.includes(category.id)} onCheckedChange={() => onFilterChange('categories', toggleSelection(selectedFilters.categories, category.id))} />
+                                            <label htmlFor={`category-m-${category.id}`} className="text-sm cursor-pointer">{category.name}</label>
                                         </div>
-                                        {filter === 'categories' && filterOpen.categories && filters.product_types.map((category) => (
-                                            <div key={`category-d-${category.id}`} className="flex items-center space-x-2 mt-2">
-                                                <Checkbox id={`category-d-${category.id}`} checked={selectedFilters.categories.includes(category.id)} onCheckedChange={() => onFilterChange('categories', toggleSelection(selectedFilters.categories, category.id))} />
-                                                <label htmlFor={`category-d-${category.id}`} className="text-sm cursor-pointer">{category.name}</label>
-                                            </div>
-                                        ))}
-                                        {filter === 'sizes' && filterOpen.sizes && filters.sizes.map((size) => (
-                                            <div key={`size-d-${size.id}`} className="flex items-center space-x-2 mt-2">
-                                                <Checkbox id={`size-d-${size.id}`} checked={selectedFilters.sizes.includes(size.id)} onCheckedChange={() => onFilterChange('sizes', toggleSelection(selectedFilters.sizes, size.id))} />
-                                                <label htmlFor={`size-d-${size.id}`} className="text-sm cursor-pointer">{size.name}</label>
-                                            </div>
-                                        ))}
-                                        {filter === 'colors' && filterOpen.colors && (
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {filters.colors.map((color) => (
-                                                    <button key={`color-d-${color.id}`} className={`w-6 h-6 rounded-full border ${selectedFilters.colors.includes(color.id) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color.color_code }} onClick={() => onFilterChange('colors', toggleSelection(selectedFilters.colors, color.id))} />
-                                                ))}
-                                            </div>
-                                        )}
-                                        {filter === 'price' && filterOpen.price && (
-                                            <div className="mt-2">
-                                                <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
-                                                <div className="flex justify-between">
-                                                    <span>£{selectedFilters.price.min}</span>
-                                                    <span>£{selectedFilters.price.max}</span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            ))}
-                        </div>
-                    </SheetContent>
-                </Sheet>
-            </div>
-            <div className="hidden md:block rounded-lg shadow-lg bg-white p-4">
-                {['categories', 'sizes', 'colors', 'price'].map((filter) => (
-                    shouldShowFilterSection(filter as keyof typeof filters) && (
-                        <div key={filter} className="mb-4">
-                            <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
-                                <h3 className="text-md font-medium capitalize">{filter}</h3>
-                                <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
-                            </div>
-                            {filter === 'categories' && filterOpen.categories && filters.product_types.map((category) => (
-                                <div key={`category-d-${category.id}`} className="flex items-center space-x-2 mt-2">
-                                    <Checkbox id={`category-d-${category.id}`} checked={selectedFilters.categories.includes(category.id)} onCheckedChange={() => onFilterChange('categories', toggleSelection(selectedFilters.categories, category.id))} />
-                                    <label htmlFor={`category-d-${category.id}`} className="text-sm cursor-pointer">{category.name}</label>
-                                </div>
-                            ))}
-                            {filter === 'sizes' && filterOpen.sizes && filters.sizes.map((size) => (
-                                <div key={`size-d-${size.id}`} className="flex items-center space-x-2 mt-2">
-                                    <Checkbox id={`size-d-${size.id}`} checked={selectedFilters.sizes.includes(size.id)} onCheckedChange={() => onFilterChange('sizes', toggleSelection(selectedFilters.sizes, size.id))} />
-                                    <label htmlFor={`size-d-${size.id}`} className="text-sm cursor-pointer">{size.name}</label>
-                                </div>
-                            ))}
-                            {filter === 'colors' && filterOpen.colors && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {filters.colors.map((color) => (
-                                        <button key={`color-d-${color.id}`} className={`w-6 h-6 rounded-full border ${selectedFilters.colors.includes(color.id) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color.color_code }} onClick={() => onFilterChange('colors', toggleSelection(selectedFilters.colors, color.id))} />
                                     ))}
+                                    {filter === 'sizes' && filterOpen.sizes && filters.sizes.map((size) => (
+                                        <div key={`size-m-${size.id}`} className="flex items-center space-x-2 mt-2">
+                                            <Checkbox id={`size-m-${size.id}`} checked={selectedFilters.sizes.includes(size.id)} onCheckedChange={() => onFilterChange('sizes', toggleSelection(selectedFilters.sizes, size.id))} />
+                                            <label htmlFor={`size-m-${size.id}`} className="text-sm cursor-pointer">{size.name}</label>
+                                        </div>
+                                    ))}
+                                    {filter === 'colors' && filterOpen.colors && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {filters.colors.map((color) => (
+                                                <button key={`color-m-${color.id}`} className={`w-6 h-6 rounded-full border ${selectedFilters.colors.includes(color.id) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color.color_code }} onClick={() => onFilterChange('colors', toggleSelection(selectedFilters.colors, color.id))} />
+                                            ))}
+                                        </div>
+                                    )}
+                                    {filter === 'price' && filterOpen.price && (
+                                        <div className="mt-2">
+                                            <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
+                                            <div className="flex justify-between">
+                                                <span>£{selectedFilters.price.min}</span>
+                                                <span>£{selectedFilters.price.max}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                            {filter === 'price' && filterOpen.price && (
-                                <div className="mt-2">
-                                    <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
-                                    <div className="flex justify-between">
-                                        <span>£{selectedFilters.price.min}</span>
-                                        <span>£{selectedFilters.price.max}</span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )
-                ))}
-                <Button onClick={onResetFilters} size="md" variant={'ghost'} className="w-full mt-4">
-                    Clear Filters
-                </Button>
-            </div>
+                            )
+                        ))}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
+        <div className="hidden md:block rounded-lg shadow-lg bg-white p-4">
+            {['categories', 'sizes', 'colors', 'price'].map((filter) => (
+                shouldShowFilterSection(filter as keyof typeof filters) && (
+                    <div key={filter} className="mb-4">
+                        <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
+                            <h3 className="text-md font-medium capitalize">{filter}</h3>
+                            <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
+                        </div>
+                        {filter === 'categories' && filterOpen.categories && filters.product_types.map((category) => (
+                            <div key={`category-d-${category.id}`} className="flex items-center space-x-2 mt-2">
+                                <Checkbox id={`category-d-${category.id}`} checked={selectedFilters.categories.includes(category.id)} onCheckedChange={() => onFilterChange('categories', toggleSelection(selectedFilters.categories, category.id))} />
+                                <label htmlFor={`category-d-${category.id}`} className="text-sm cursor-pointer">{category.name}</label>
+                            </div>
+                        ))}
+                        {filter === 'sizes' && filterOpen.sizes && filters.sizes.map((size) => (
+                            <div key={`size-d-${size.id}`} className="flex items-center space-x-2 mt-2">
+                                <Checkbox id={`size-d-${size.id}`} checked={selectedFilters.sizes.includes(size.id)} onCheckedChange={() => onFilterChange('sizes', toggleSelection(selectedFilters.sizes, size.id))} />
+                                <label htmlFor={`size-d-${size.id}`} className="text-sm cursor-pointer">{size.name}</label>
+                            </div>
+                        ))}
+                        {filter === 'colors' && filterOpen.colors && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {filters.colors.map((color) => (
+                                    <button key={`color-d-${color.id}`} className={`w-6 h-6 rounded-full border ${selectedFilters.colors.includes(color.id) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color.color_code }} onClick={() => onFilterChange('colors', toggleSelection(selectedFilters.colors, color.id))} />
+                                ))}
+                            </div>
+                        )}
+                        {filter === 'price' && filterOpen.price && (
+                            <div className="mt-2">
+                                <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
+                                <div className="flex justify-between">
+                                    <span>£{selectedFilters.price.min}</span>
+                                    <span>£{selectedFilters.price.max}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )
+            ))}
+        </div>
+    </>
     );
 }

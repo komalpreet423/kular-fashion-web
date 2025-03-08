@@ -51,7 +51,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     <motion.div className="transition-transform duration-300 transform hover:scale-110">
                         <Link href={`/product/${slug}`}>
                             <Image
-                                src={config.apiBaseRoot+default_image}
+                                src={default_image ? config.apiBaseRoot+default_image : `/images/default-product.png`}
                                 alt={name}
                                 width={300}
                                 height={350}
