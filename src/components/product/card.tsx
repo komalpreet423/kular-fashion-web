@@ -63,7 +63,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 </div>
                 <CardContent className="px-4 pb-2">
                     <Link href={`/product/${slug}`}>
-                        <p className="text-gray-500 my-0 text-sm cursor-pointer">{brand.name}</p>
+                        <p className="text-gray-500 my-0 text-sm cursor-pointer">{brand?.name}</p>
                     </Link>
 
                     <Link href={`/product/${slug}`}>
