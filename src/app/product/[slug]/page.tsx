@@ -10,6 +10,9 @@ import { config } from '@/config';
 import { CiHeart } from 'react-icons/ci';
 import NoProductsFound from '@/components/product/not-found';
 import LoadingProduct from '@/components/product/loading-single';
+import CustomTabs from '@/components/ui/custom-tabs';
+import ProductSpecifications from '@/components/product/summary';
+import ProductSummary from '@/components/product/summary';
 
 interface Brand {
     id: number;
@@ -45,8 +48,8 @@ interface ProductType {
 interface WebInfo {
     id: number;
     product_id: number;
-    summary: string | null;
-    description: string | null;
+    summary: string;
+    description: string;
     is_splitted_with_colors: number;
     heading: string;
     meta_title: string;
@@ -190,7 +193,11 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                     <div className="flex flex-col">
                         <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
-                            <p className="text-lg">{product.webInfo.description}</p>
+
+                            {product.webInfo.summary && 
+                            <div className="mb-0">
+                                <div dangerouslySetInnerHTML={{ __html: product.webInfo.summary }} />
+                            </div> }
                             <div className="text-lg font-semibold">${product.price}</div>
 
                             {/* Color and Size Selection */}
@@ -201,16 +208,17 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                             />
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                                <Button className='rounded-none' disabled={!selectedColor || !selectedSize}>
+                                <Button className='rounded-none uppercase' disabled={!selectedColor || !selectedSize}>
                                     <FiShoppingCart />
                                     Add to Cart
                                 </Button>
-                                <Button variant={'outline'} className='rounded-none'>
+                                <Button variant={'outline'} className='rounded-none uppercase'>
                                     <CiHeart />
                                     Add to Wishlist
                                 </Button>
                             </div>
 
+                            <ProductSummary description={product.webInfo.description} specifications={product.specifications} />
                         </div>
                     </div>
                 </div>
