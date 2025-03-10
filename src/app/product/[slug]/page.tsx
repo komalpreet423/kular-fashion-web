@@ -141,7 +141,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                     throw new Error('Product not found');
                 }
                 const apiResponse = await res.json();
-                console.log('data', apiResponse.data)
+                // console.log('data', apiResponse.data)
                 setProduct(apiResponse.data);
             } catch (err) {
                 setError((err as Error).message);
@@ -165,14 +165,14 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
         return <div>Product not found</div>;
     }
 
-    console.log(product)
+    // console.log(product)
 
     const productImages = [
         { src: "/images/temp/product1.jpg", alt: "Product 1" },
         { src: "/images/temp/product2.jpg", alt: "Product 2" },
         { src: "/images/temp/product3.jpg", alt: "Product 3" },
         { src: "/images/temp/product4.jpg", alt: "Product 4" },
-
+        { src: "/images/temp/product5.jpg", alt: "Product 5" },
     ];
 
     // Handle selection changes
@@ -184,7 +184,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     return (
         <>
             <div className="container mx-auto py-8 px-4">
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                     {/* Product Image */}
                     <div className="flex justify-center">
                         <ProductImages images={productImages} />
@@ -204,16 +204,17 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                                 onSelectionChange={handleSelectionChange}
                             />
 
-                            <div className="flex gap-4">
-                                <Button className='rounded-none w-50 mt-4 uppercase' disabled={!selectedColor || !selectedSize}>
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
+                                <Button className="rounded-none w-full sm:w-1/2 mt-4 uppercase" disabled={!selectedColor || !selectedSize}>
                                     <FiShoppingCart />
                                     Add to Cart
                                 </Button>
-                                <Button variant={'outline'} className='rounded-none w-50 mt-4 uppercase'>
+                                <Button variant="outline" className="rounded-none w-full sm:w-1/2 mt-4 uppercase">
                                     <CiHeart />
                                     Add to Wishlist
                                 </Button>
                             </div>
+
 
                         </div>
                     </div>
