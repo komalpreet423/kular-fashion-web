@@ -10,8 +10,6 @@ import { config } from '@/config';
 import { CiHeart } from 'react-icons/ci';
 import NoProductsFound from '@/components/product/not-found';
 import LoadingProduct from '@/components/product/loading-single';
-import CustomTabs from '@/components/ui/custom-tabs';
-import ProductSpecifications from '@/components/product/summary';
 import ProductSummary from '@/components/product/summary';
 
 interface Brand {
