@@ -169,9 +169,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
 
     const productImages = [
         { src: "/images/temp/product1.jpg", alt: "Product 1" },
-        { src: "/images/temp/product2.jpg", alt: "Product 2" },
+        { src: "/images/temp/product7.jpg", alt: "Product 7" },
         { src: "/images/temp/product3.jpg", alt: "Product 3" },
-        { src: "/images/temp/product4.jpg", alt: "Product 4" },
+        { src: "/images/temp/product5.jpg", alt: "Product 5" },
+        { src: "/images/temp/product6.jpg", alt: "Product 6" },
     ];
 
     // Handle selection changes
