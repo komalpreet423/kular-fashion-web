@@ -84,8 +84,8 @@ const ProductVariants = ({ colors, sizes, onSelectionChange }: ProductOptionsPro
                     {sizes.map((size, index) => (
                         <button
                             key={index}
-                            className={`px-4 py-2 border-2 uppercase rounded-md cursor-pointer ${selectedSize === size
-                                ? 'border-primary bg-primary/50'
+                            className={`px-4 py-2 border-2 uppercase rounded-none cursor-pointer ${selectedSize === size
+                                ? 'border-primary bg-primary/50 text-primary'
                                 : 'border-gray-300 hover:bg-gray-100'
                                 }`}
                             onClick={() => setSelectedSize(size)}

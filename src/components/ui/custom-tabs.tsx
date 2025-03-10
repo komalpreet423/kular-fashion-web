@@ -26,7 +26,7 @@ const CustomTabs: React.FC<TabsProps> = ({ tabs }) => {
                 {tabs.map((tab, index) => (
                     <button
                         key={index}
-                        className={`py-2 px-4 cursor-pointer focus-visible:outline-hidden text-md font-medium text-gray-900 hover:text-primary ${activeTab === index ? 'text-primary border-b-2 border-primary' : ''
+                        className={`py-2 px-4 cursor-pointer uppercase focus-visible:outline-hidden text-md font-medium text-gray-900 hover:text-primary ${activeTab === index ? 'text-primary border-b-2 border-primary' : ''
                             }`}
                         onClick={() => setActiveTab(index)}
                     >
