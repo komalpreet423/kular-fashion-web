@@ -8,6 +8,8 @@ import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
 import { config } from '@/config';
 import { CiHeart } from 'react-icons/ci';
+import NoProductsFound from '@/components/product/not-found';
+import LoadingProduct from '@/components/product/loading-single';
 
 interface Brand {
     id: number;
@@ -115,15 +117,14 @@ interface Product {
     department: Department;
     productType: ProductType;
     webInfo: WebInfo;
-    images: any[]; // Replace `any` with a specific type if images have a known structure
-    specifications: any[]; // Replace `any` with a specific type if specifications have a known structure
+    images: any[];
+    specifications: any[];
     sizes: ProductSize[];
     colors: ProductColor[];
 }
 
 
 const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
-    // Unwrap the params object using React.use()
     const { slug } = React.use(params);
 
     const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
@@ -132,7 +133,6 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Find the product based on the slug
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -141,7 +141,6 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                     throw new Error('Product not found');
                 }
                 const apiResponse = await res.json();
-                console.log('data', apiResponse.data)
                 setProduct(apiResponse.data);
             } catch (err) {
                 setError((err as Error).message);
@@ -154,25 +153,22 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     }, [slug]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (<LoadingProduct />);
+    }
+
+    if (!product) {
+        return <NoProductsFound message='Product not found!' description={`Sorry, the product you're looking for is not available. Please check back later or explore other options`} />;
     }
 
     if (error) {
         return <div>{error}</div>;
     }
 
-    if (!product) {
-        return <div>Product not found</div>;
-    }
-
-    console.log(product)
-
     const productImages = [
         { src: "/images/temp/product1.jpg", alt: "Product 1" },
         { src: "/images/temp/product2.jpg", alt: "Product 2" },
         { src: "/images/temp/product3.jpg", alt: "Product 3" },
         { src: "/images/temp/product4.jpg", alt: "Product 4" },
-
     ];
 
     // Handle selection changes
@@ -195,7 +191,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                         <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
                             <p className="text-lg">{product.webInfo.description}</p>
-                            <div className="mt-4 text-xl font-semibold">${product.price}</div>
+                            <div className="text-lg font-semibold">${product.price}</div>
 
                             {/* Color and Size Selection */}
                             <ProductVariants
@@ -204,12 +200,12 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                                 onSelectionChange={handleSelectionChange}
                             />
 
-                            <div className="flex gap-4">
-                                <Button className='rounded-none w-50 mt-4 uppercase' disabled={!selectedColor || !selectedSize}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                                <Button className='rounded-none' disabled={!selectedColor || !selectedSize}>
                                     <FiShoppingCart />
                                     Add to Cart
                                 </Button>
-                                <Button variant={'outline'} className='rounded-none w-50 mt-4 uppercase'>
+                                <Button variant={'outline'} className='rounded-none'>
                                     <CiHeart />
                                     Add to Wishlist
                                 </Button>

@@ -57,12 +57,11 @@ const ProductVariants = ({ colors, sizes, onSelectionChange }: ProductOptionsPro
         onSelectionChange(selectedColor, selectedSize);
     }, [selectedColor, selectedSize, onSelectionChange]);
 
-    return (
-        <div>
+    return (<>
             {/* Color Swatches */}
-            <div className="mt-4">
+            <div className="mt-2">
                 <h3 className="text-lg font-semibold">Colors</h3>
-                <div className="flex space-x-2 mt-2">
+                <div className="flex space-x-2">
                     {colors.map((color, index) => (
                         <button
                             key={index}
@@ -81,11 +80,11 @@ const ProductVariants = ({ colors, sizes, onSelectionChange }: ProductOptionsPro
             {/* Sizes */}
             <div className="mt-2">
                 <h3 className="text-lg font-semibold">Sizes</h3>
-                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-6 gap-2 mt-2">
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-6 gap-2">
                     {sizes.map((size, index) => (
                         <button
                             key={index}
-                            className={`px-4 py-2 border-2 rounded-md cursor-pointer ${selectedSize === size
+                            className={`px-4 py-2 border-2 uppercase rounded-md cursor-pointer ${selectedSize === size
                                 ? 'border-primary bg-primary/50'
                                 : 'border-gray-300 hover:bg-gray-100'
                                 }`}
@@ -96,7 +95,7 @@ const ProductVariants = ({ colors, sizes, onSelectionChange }: ProductOptionsPro
                     ))}
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
