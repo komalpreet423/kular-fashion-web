@@ -182,7 +182,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     return (
         <>
             <div className="container mx-auto py-8 px-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                     {/* Product Image */}
                     <div className="flex justify-center">
                         <ProductImages images={productImages} />
