@@ -6,10 +6,15 @@ const LoadingProduct = () => {
             <div className="grid md:grid-cols-2 gap-8">
                 {/* Product Image */}
                 <div className="flex justify-center">
-                    <div className='w-full'>
-                        <Skeleton className="h-[325px] w-full rounded-xl bg-gray-200" />
+                    <div className="md:w-1/4">
+                        <Skeleton className="h-24 w-full mb-4 bg-gray-200" />
+                        <Skeleton className="h-24 w-full mb-4 bg-gray-200" />
+                        <Skeleton className="h-24 w-full mb-4 bg-gray-200" />
+                    </div>
+                    <div className='w-full pl-4'>
+                        <Skeleton className="h-[225px] md:h-[425px] w-full rounded-xl bg-gray-200" />
 
-                        <div className="flex mt-2 gap-4">
+                        <div className="flex md:hidden mt-2 gap-4">
                             <Skeleton className="h-24 w-full mb-4 bg-gray-200" />
                             <Skeleton className="h-24 w-full mb-4 bg-gray-200" />
                             <Skeleton className="h-24 w-full mb-4 bg-gray-200" />
@@ -42,6 +47,12 @@ const LoadingProduct = () => {
                             <Skeleton className="h-12 w-full mb-4 bg-gray-200" />
                         </div>
 
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-2">
+                            <Skeleton className="h-10 w-full mb-4 bg-gray-200" />
+                            <Skeleton className="h-10 w-full mb-4 bg-gray-200" />
+                        </div>
+
+                        <Skeleton className="h-58 w-full mb-2" />
                     </div>
                 </div>
             </div>
