@@ -99,7 +99,7 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images }) => {
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto flex">
+        <div className="w-full hidden max-w-4xl mx-auto flex">
             {/* Thumbnail Image Slider */}
             <div className="thumbnail-slider w-1/6 mr-4 relative">
                 <Slider {...settingsThumbnail}>

@@ -79,9 +79,9 @@ const ProductVariants = ({ colors, sizes, onSelectionChange }: ProductOptionsPro
             </div>
 
             {/* Sizes */}
-            <div className="mt-4">
+            <div className="mt-2">
                 <h3 className="text-lg font-semibold">Sizes</h3>
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-6 gap-2 mt-2">
                     {sizes.map((size, index) => (
                         <button
                             key={index}

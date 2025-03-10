@@ -7,6 +7,7 @@ import ProductVariants from '@/components/product/variants';
 import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
 import { config } from '@/config';
+import { CiHeart } from 'react-icons/ci';
 
 interface Brand {
     id: number;
@@ -196,16 +197,6 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                             <p className="text-lg">{product.webInfo.description}</p>
                             <div className="mt-4 text-xl font-semibold">${product.price}</div>
 
-                            {/* Product Details */}
-                            <div className="mt-4">
-                                <h3 className="text-lg font-semibold">Product Details</h3>
-                                <ul className="list-disc list-inside mt-2">
-                                    {/* {product.details.map((detail, index) => (
-                                        <li key={index} className="text-sm">{detail}</li>
-                                    ))} */}
-                                </ul>
-                            </div>
-
                             {/* Color and Size Selection */}
                             <ProductVariants
                                 colors={product.colors}
@@ -213,21 +204,17 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                                 onSelectionChange={handleSelectionChange}
                             />
 
-                            {/* Display Selected Options */}
-                            <div className="mt-1 mb-4">
-                                {selectedColor && (
-                                    <p className="text-sm">
-                                        Selected Color: <span style={{ color: selectedColor.detail.ui_color_code }}>⬤</span>
-                                    </p>
-                                )}
-                                {selectedSize && (
-                                    <p className="text-sm">Selected Size: {selectedSize.detail.name}</p>
-                                )}
+                            <div className="flex gap-4">
+                                <Button className='rounded-none w-50 mt-4 uppercase' disabled={!selectedColor || !selectedSize}>
+                                    <FiShoppingCart />
+                                    Add to Cart
+                                </Button>
+                                <Button variant={'outline'} className='rounded-none w-50 mt-4 uppercase'>
+                                    <CiHeart />
+                                    Add to Wishlist
+                                </Button>
                             </div>
-                            <Button className='rounded-none w-50'>
-                                <FiShoppingCart />
-                                Add to Cart
-                            </Button>
+
                         </div>
                     </div>
                 </div>
