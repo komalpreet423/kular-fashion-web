@@ -18,6 +18,7 @@ type ProductCardProps = {
     brand: {
         name: string;
     }
+    images: any
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -26,9 +27,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
     price,
     sale_price,
     default_image,
-    brand
+    brand,
+    images
 }) => {
     const [isFavorited, setIsFavorited] = useState(false);
+
+    let thumbnail = `/images/default-product.png`;
+
+    if(default_image){
+        thumbnail = config.apiBaseRoot+default_image;
+    }
+
+    if(images.length > 0){
+        thumbnail = config.apiBaseRoot+images[0].path;
+    }
 
     return (
         <motion.div
@@ -51,7 +63,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     <motion.div className="transition-transform duration-300 transform hover:scale-110">
                         <Link href={`/product/${slug}`}>
                             <Image
-                                src={default_image ? config.apiBaseRoot+default_image : `/images/default-product.png`}
+                                src={thumbnail}
                                 alt={name}
                                 width={300}
                                 height={350}

@@ -23,7 +23,8 @@ interface Product {
     default_image: string;
     brand: {
         name: string;
-    }
+    },
+    images: any
 }
 
 interface Filter {
