@@ -66,7 +66,7 @@ export default function ProductsPage() {
         product_types: [],
         sizes: [],
         colors: [],
-        price: { min: 0, max: 500 },
+        price: { min: 0, max: 0 },
     });
     const [pagination, setPagination] = useState<Pagination | null>(null);
     const [selectedFilters, setSelectedFilters] = useState<{
@@ -78,7 +78,7 @@ export default function ProductsPage() {
         categories: [],
         sizes: [],
         colors: [],
-        price: { min: 0, max: 500 },
+        price: { min: 0, max: -1 },
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(12);
@@ -102,9 +102,15 @@ export default function ProductsPage() {
                 categories: selectedFilters.categories.join(','),
                 sizes: selectedFilters.sizes.join(','),
                 colors: selectedFilters.colors.join(','),
-                min_price: selectedFilters.price.min.toString(),
-                max_price: selectedFilters.price.max.toString(),
             });
+
+            if (selectedFilters.price.min >= 0) {
+                queryParams.append('min_price', selectedFilters.price.min.toString());
+            }
+
+            if (selectedFilters.price.max > selectedFilters.price.min) {
+                queryParams.append('max_price', selectedFilters.price.max.toString());
+            }
 
             const res = await fetch(`${config.apiBaseUrl}products?${queryParams}`);
             if (!res.ok) {
@@ -112,6 +118,7 @@ export default function ProductsPage() {
             }
 
             const data = await res.json();
+
             setProducts(data.data);
             setFilters(data.filters);
             setError(null);
@@ -123,9 +130,7 @@ export default function ProductsPage() {
         }
     };
 
-
     const debouncedFetchProducts = debounce(fetchProducts, 300);
-
     useEffect(() => {
         debouncedFetchProducts();
         return () => debouncedFetchProducts.cancel();
@@ -144,7 +149,7 @@ export default function ProductsPage() {
         });
     };
 
-    const handleRemoveFilter = (type: keyof typeof selectedFilters, value: string) => {
+    const handleRemoveFilter = (type: keyof typeof selectedFilters, value: string | object) => {
         setSelectedFilters((prev) => {
             const currentFilter = prev[type];
 
@@ -176,8 +181,9 @@ export default function ProductsPage() {
         selectedFilters.categories.length > 0 ||
         selectedFilters.sizes.length > 0 ||
         selectedFilters.colors.length > 0 ||
-        selectedFilters.price.min !== filters.price.min ||
-        selectedFilters.price.max !== filters.price.max;
+        ((selectedFilters.price.min !== filters.price.min ||
+            selectedFilters.price.max !== filters.price.max) &&
+            selectedFilters.price.max >= 0);
 
     return (
         <div className="flex flex-col md:flex-row gap-4 p-4">
@@ -269,7 +275,7 @@ export default function ProductsPage() {
                                         {(selectedFilters.price.min !== selectedFilters.price.max) && (
                                             <div className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600">
                                                 <span className="text-sm text-gray-800 dark:text-gray-200">{`£${selectedFilters.price.min} - £${selectedFilters.price.max}`}</span>
-                                                <button className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300" onClick={resetFilters}>
+                                                <button className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300" onClick={() => handleRemoveFilter('price', { min: 0, max: 0 })}>
                                                     <IoCloseSharp />
                                                 </button>
                                             </div>

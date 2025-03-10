@@ -102,10 +102,10 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                                     )}
                                     {filter === 'price' && filterOpen.price && (
                                         <div className="mt-2">
-                                            <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
+                                            <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max > -1 ? selectedFilters.price.max : filters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
                                             <div className="flex justify-between">
                                                 <span>£{selectedFilters.price.min}</span>
-                                                <span>£{selectedFilters.price.max}</span>
+                                                <span>£{selectedFilters.price.max > -1 ? selectedFilters.price.max : filters.price.max}</span>
                                             </div>
                                         </div>
                                     )}
@@ -145,10 +145,10 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                         )}
                         {filter === 'price' && filterOpen.price && (
                             <div className="mt-2">
-                                <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
+                                <Slider min={filters.price.min} max={filters.price.max} step={1} value={[selectedFilters.price.min, selectedFilters.price.max > -1 ? selectedFilters.price.max : filters.price.max]} onValueChange={(val) => onFilterChange('price', { min: val[0], max: val[1] })} />
                                 <div className="flex justify-between">
                                     <span>£{selectedFilters.price.min}</span>
-                                    <span>£{selectedFilters.price.max}</span>
+                                    <span>£{selectedFilters.price.max > -1 ? selectedFilters.price.max : filters.price.max}</span>
                                 </div>
                             </div>
                         )}
