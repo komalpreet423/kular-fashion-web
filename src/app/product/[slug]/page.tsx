@@ -1,79 +1,181 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ProductImages from '@/components/product/images';
 import ProductVariants from '@/components/product/variants';
 import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
+import { config } from '@/config';
 
-// Define types for the product
-interface Product {
-    id: string;
+interface Brand {
+    id: number;
     name: string;
-    description: string;
-    price: number;
-    imageUrl: string;
-    colors: string[];
-    sizes: string[];
-    details: string[];
+    slug: string;
+    short_name: string;
+    image: string | null;
+    small_image: string | null;
+    medium_image: string | null;
+    large_image: string | null;
 }
 
-// Mock product data (replace with actual data fetching logic if needed)
-const products: Product[] = [
-    {
-        id: '1',
-        name: 'Product 1',
-        imageUrl: '/product1.jpg',
-        description: 'A great product!',
-        price: 29.99,
-        colors: ['#FF0000', '#00FF00', '#0000FF'],
-        sizes: ['S', 'M', 'L', 'XL'],
-        details: [
-            'Material: 100% Cotton',
-            'Care Instructions: Machine wash cold, tumble dry low',
-            'Fit: Regular fit'
-        ]
-    },
-    {
-        id: '2',
-        name: 'Product 2',
-        imageUrl: '/product2.jpg',
-        description: 'Another great product!',
-        price: 49.99,
-        colors: ['#FFFF00', '#00FFFF', '#FF00FF'],
-        sizes: ['M', 'L', 'XL'],
-        details: [
-            'Material: 100% Polyester',
-            'Care Instructions: Hand wash cold, lay flat to dry',
-            'Fit: Slim fit'
-        ]
-    },
-];
+interface Department {
+    id: number;
+    name: string;
+    slug: string;
+    image: string;
+    description: string;
+    status: string;
+}
+
+interface ProductType {
+    id: number;
+    name: string;
+    slug: string;
+    short_name: string;
+    image: string | null;
+    small_image: string | null;
+    medium_image: string | null;
+    large_image: string | null;
+}
+
+interface WebInfo {
+    id: number;
+    product_id: number;
+    summary: string | null;
+    description: string | null;
+    is_splitted_with_colors: number;
+    heading: string;
+    meta_title: string;
+    meta_keywords: string;
+    meta_description: string;
+    status: number;
+}
+
+interface SizeDetail {
+    id: number;
+    size_scale_id: number;
+    name: string;
+    new_code: string;
+    old_code: string | null;
+    length: string | null;
+    status: string;
+}
+
+interface ProductSize {
+    id: number;
+    product_id: number;
+    size_id: number;
+    mrp: string;
+    web_price: string;
+    web_sale_price: string;
+    detail: SizeDetail;
+}
+
+interface ColorDetail {
+    id: number;
+    name: string;
+    slug: string;
+    short_name: string;
+    code: string;
+    ui_color_code: string;
+    status: string;
+}
+
+interface ProductColor {
+    id: number;
+    product_id: number;
+    color_id: number;
+    supplier_color_code: string;
+    supplier_color_name: string;
+    swatch_image_path: string | null;
+    detail: ColorDetail;
+}
+
+// Define the main Product interface
+interface Product {
+    id: number;
+    slug: string;
+    name: string;
+    article_code: string;
+    manufacture_code: string;
+    brand_id: number;
+    department_id: number;
+    product_type_id: number;
+    price: string;
+    sale_price: string | null;
+    sale_start: string | null;
+    sale_end: string | null;
+    season: string | null;
+    size_scale_id: number;
+    min_size_id: number;
+    max_size_id: number;
+    brand: Brand;
+    department: Department;
+    productType: ProductType;
+    webInfo: WebInfo;
+    images: any[]; // Replace `any` with a specific type if images have a known structure
+    specifications: any[]; // Replace `any` with a specific type if specifications have a known structure
+    sizes: ProductSize[];
+    colors: ProductColor[];
+}
+
 
 const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     // Unwrap the params object using React.use()
     const { slug } = React.use(params);
 
-    const [selectedColor, setSelectedColor] = useState<string | null>(null);
-    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
+    const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
+    const [product, setProduct] = useState<Product | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
     // Find the product based on the slug
-    const product = products.find((product) => product.id === slug);
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const res = await fetch(`${config.apiBaseUrl}products/${slug}`);
+                if (!res.ok) {
+                    throw new Error('Product not found');
+                }
+                const apiResponse = await res.json();
+                console.log('data', apiResponse.data)
+                setProduct(apiResponse.data);
+            } catch (err) {
+                setError((err as Error).message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduct();
+    }, [slug]);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (error) {
+        return <div>{error}</div>;
+    }
 
     if (!product) {
-        return <div>Product not found</div>; // or a 404 page
+        return <div>Product not found</div>;
     }
+
+    console.log(product)
 
     const productImages = [
         { src: "/images/temp/product1.jpg", alt: "Product 1" },
         { src: "/images/temp/product2.jpg", alt: "Product 2" },
         { src: "/images/temp/product3.jpg", alt: "Product 3" },
         { src: "/images/temp/product4.jpg", alt: "Product 4" },
+
     ];
 
     // Handle selection changes
-    const handleSelectionChange = (color: string | null, size: string | null) => {
+    const handleSelectionChange = (color: ProductColor | null, size: ProductSize | null) => {
         setSelectedColor(color);
         setSelectedSize(size);
     };
@@ -89,18 +191,18 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
 
                     {/* Product Details */}
                     <div className="flex flex-col">
-                        <div className='px-4'>
+                        <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
-                            <p className="text-lg">{product.description}</p>
+                            <p className="text-lg">{product.webInfo.description}</p>
                             <div className="mt-4 text-xl font-semibold">${product.price}</div>
 
                             {/* Product Details */}
                             <div className="mt-4">
                                 <h3 className="text-lg font-semibold">Product Details</h3>
                                 <ul className="list-disc list-inside mt-2">
-                                    {product.details.map((detail, index) => (
+                                    {/* {product.details.map((detail, index) => (
                                         <li key={index} className="text-sm">{detail}</li>
-                                    ))}
+                                    ))} */}
                                 </ul>
                             </div>
 
@@ -115,11 +217,11 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                             <div className="mt-1 mb-4">
                                 {selectedColor && (
                                     <p className="text-sm">
-                                        Selected Color: <span style={{ color: selectedColor }}>⬤</span>
+                                        Selected Color: <span style={{ color: selectedColor.detail.ui_color_code }}>⬤</span>
                                     </p>
                                 )}
                                 {selectedSize && (
-                                    <p className="text-sm">Selected Size: {selectedSize}</p>
+                                    <p className="text-sm">Selected Size: {selectedSize.detail.name}</p>
                                 )}
                             </div>
                             <Button className='rounded-none w-50'>
