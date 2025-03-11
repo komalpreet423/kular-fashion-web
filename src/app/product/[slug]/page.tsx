@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import ProductImages from '@/components/product/images';
+import ProductImages from '@/components/product/detail/images';
 import ProductVariants from '@/components/product/variants';
 import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
 import { CiHeart } from 'react-icons/ci';
 import NoProductsFound from '@/components/product/not-found';
-import LoadingProduct from '@/components/product/loading-single';
-import ProductSummary from '@/components/product/summary';
+import LoadingProduct from '@/components/product/detail/loading';
+import ProductSummary from '@/components/product/detail/summary';
 import { apiBaseUrl } from '@/config';
 import {
     Breadcrumb,
@@ -20,6 +20,8 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Product, ProductSize, ProductColor } from '@/types/product';
+import ProductHeader from '@/components/product/detail/header';
+import ProductActions from '@/components/product/detail/actions';
 
 const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     const { slug } = React.use(params);
@@ -67,6 +69,14 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
         setSelectedSize(size);
     };
 
+    const handleAddToCart = () => {
+        // Add to cart logic here
+    };
+
+    const handleAddToWishlist = () => {
+        // Add to wishlist logic here
+    };
+
     return (
         <>
             <div className="container mx-auto py-8 px-4">
@@ -78,21 +88,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
 
                     {/* Product Details */}
                     <div className="flex flex-col">
-                        <Breadcrumb>
-                            <BreadcrumbList>
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href="/products">Products</BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage>{product.name}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                            </BreadcrumbList>
-                        </Breadcrumb>
+                        <ProductHeader productName={product.name} />
 
                         <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
@@ -110,16 +106,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                                 onSelectionChange={handleSelectionChange}
                             />
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                                <Button className="rounded-none uppercase" disabled={!selectedColor || !selectedSize}>
-                                    <FiShoppingCart />
-                                    Add to Cart
-                                </Button>
-                                <Button variant="outline" className="rounded-none uppercase">
-                                    <CiHeart />
-                                    Add to Wishlist
-                                </Button>
-                            </div>
+                            <ProductActions isDisabled={!selectedColor || !selectedSize} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />
 
                             <ProductSummary description={product.webInfo.description} specifications={product.specifications} />
                         </div>
