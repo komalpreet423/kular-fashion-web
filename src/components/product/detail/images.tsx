@@ -72,12 +72,16 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
         updateArrows(selectedIndex);
     }, [filteredImages]);
 
-    if (!filteredImages.length) {
+    if (!filteredImages.length || filteredImages.length === 1) {
         let thumbnail = `/images/default-product.png`;
 
         if (defaultImage) {
             thumbnail = apiBaseRoot + defaultImage;
         }
+
+        if((filteredImages || []).length > 0){
+            thumbnail = apiBaseRoot+filteredImages[0].path;
+        }    
 
         return <><Image
             src={thumbnail}

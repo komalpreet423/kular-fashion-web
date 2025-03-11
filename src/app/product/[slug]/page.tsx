@@ -1,27 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import ProductImages from '@/components/product/detail/images';
 import ProductVariants from '@/components/product/variants';
 import React from 'react';
-import { FiShoppingCart } from 'react-icons/fi';
-import { CiHeart } from 'react-icons/ci';
 import NoProductsFound from '@/components/product/not-found';
 import LoadingProduct from '@/components/product/detail/loading';
 import ProductSummary from '@/components/product/detail/summary';
 import { apiBaseUrl } from '@/config';
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { Product, ProductSize, ProductColor } from '@/types/product';
 import ProductHeader from '@/components/product/detail/header';
 import ProductActions from '@/components/product/detail/actions';
+import RelatedProducts from '@/components/product/detail/related';
 
 const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     const { slug } = React.use(params);
@@ -77,6 +67,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
         // Add to wishlist logic here
     };
 
+
     return (
         <>
             <div className="container mx-auto py-8 px-4">
@@ -113,6 +104,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                     </div>
                 </div>
             </div>
+
+            {product.relatedProducts.length ? (
+                <RelatedProducts relatedProducts={product.relatedProducts} />
+            ) : <></>}
         </>
     );
 };

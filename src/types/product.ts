@@ -60,7 +60,7 @@ export interface ProductBase {
     name: string;
     price: number;
     sale_price: number | null;
-    default_image: string | null;
+    default_image: string;
     brand: Brand;
     images: ProductImageProps[];
 }
@@ -68,7 +68,7 @@ export interface ProductBase {
 export interface Product extends ProductBase {
     article_code: string;
     manufacture_code: string;
-    default_image: string | null;
+    default_image: string;
     brand_id: number;
     department_id: number;
     product_type_id: number;
@@ -83,4 +83,5 @@ export interface Product extends ProductBase {
     specifications: any[];
     sizes: ProductSize[];
     colors: ProductColor[];
+    relatedProducts: ProductBase[];
 }

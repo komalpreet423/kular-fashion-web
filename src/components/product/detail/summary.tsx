@@ -32,7 +32,6 @@ const ProductSummary: React.FC<ProductSummaryProps> = ({ description, specificat
         productSummary.push({ label: 'Specifications', content: specificationsContent });
     }
 
-
     return (
         <div className="mt-2">
             <div className="space-y-3">
