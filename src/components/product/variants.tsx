@@ -1,6 +1,5 @@
 'use client';
-
-import { config } from '@/config';
+import { apiBaseRoot } from '@/config';
 import { useState, useEffect } from 'react';
 
 interface ColorDetail {
@@ -70,7 +69,7 @@ const ProductVariants = ({ colors, sizes, onSelectionChange }: ProductOptionsPro
                                 ? 'border-primary'
                                 : 'border-gray-300'
                                 }`}
-                            style={{ background: color.swatch_image_path ? `url(${config.apiBaseRoot+color.swatch_image_path}) no-repeat center center / cover` : color.detail.ui_color_code }}
+                            style={{ background: color.swatch_image_path ? `url(${apiBaseRoot+color.swatch_image_path}) no-repeat center center / cover` : color.detail.ui_color_code }}
                             onClick={() => setSelectedColor(color)}
                             aria-label={`Select color ${color}`}
                         ></button>

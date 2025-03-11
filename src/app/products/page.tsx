@@ -7,12 +7,12 @@ import { motion } from 'framer-motion';
 import { Pagination, PaginationContent, PaginationItem } from '@/components/ui/pagination';
 import { IoCloseSharp } from 'react-icons/io5';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { config } from '@/config';
 import Error500 from '@/components/errors/500';
 import FilterSidebar from '@/components/product/filter-sidebar';
 import NoProductsFound from '@/components/product/not-found';
 import { Skeleton } from '@/components/ui/skeleton';
 import { debounce } from 'lodash';
+import { apiBaseUrl } from '@/config';
 
 interface Product {
     id: number;
@@ -113,7 +113,7 @@ export default function ProductsPage() {
                 queryParams.append('max_price', selectedFilters.price.max.toString());
             }
 
-            const res = await fetch(`${config.apiBaseUrl}products?${queryParams}`);
+            const res = await fetch(`${apiBaseUrl}products?${queryParams}`);
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }

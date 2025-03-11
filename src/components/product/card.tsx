@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { useState } from 'react';
 import Link from 'next/link';
-import { config } from '@/config';
+import { apiBaseRoot } from '@/config';
 
 type ProductCardProps = {
     id: number;
@@ -35,11 +35,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
     let thumbnail = `/images/default-product.png`;
 
     if(default_image){
-        thumbnail = config.apiBaseRoot+default_image;
+        thumbnail = apiBaseRoot+default_image;
     }
 
-    if(images.length > 0){
-        thumbnail = config.apiBaseRoot+images[0].path;
+    if((images || []).length > 0){
+        thumbnail = apiBaseRoot+images[0].path;
     }
 
     return (

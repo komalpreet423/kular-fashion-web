@@ -6,11 +6,11 @@ import ProductImages from '@/components/product/images';
 import ProductVariants from '@/components/product/variants';
 import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
-import { config } from '@/config';
 import { CiHeart } from 'react-icons/ci';
 import NoProductsFound from '@/components/product/not-found';
 import LoadingProduct from '@/components/product/loading-single';
 import ProductSummary from '@/components/product/summary';
+import { apiBaseUrl } from '@/config';
 
 interface Brand {
     id: number;
@@ -137,7 +137,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const res = await fetch(`${config.apiBaseUrl}products/${slug}`);
+                const res = await fetch(`${apiBaseUrl}products/${slug}`);
                 if (!res.ok) {
                     throw new Error('Product not found');
                 }
