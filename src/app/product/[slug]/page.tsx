@@ -193,10 +193,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                         <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
 
-                            {product.webInfo.summary && 
-                            <div className="mb-0">
-                                <div dangerouslySetInnerHTML={{ __html: product.webInfo.summary }} />
-                            </div> }
+                            {product.webInfo.summary &&
+                                <div className="mb-0">
+                                    <div dangerouslySetInnerHTML={{ __html: product.webInfo.summary }} />
+                                </div>}
                             <div className="text-lg font-semibold">${product.price}</div>
 
                             {/* Color and Size Selection */}
@@ -206,12 +206,12 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                                 onSelectionChange={handleSelectionChange}
                             />
 
-                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
-                                <Button className="rounded-none w-full sm:w-1/2 mt-4 uppercase" disabled={!selectedColor || !selectedSize}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                                <Button className="rounded-none uppercase" disabled={!selectedColor || !selectedSize}>
                                     <FiShoppingCart />
                                     Add to Cart
                                 </Button>
-                                <Button variant="outline" className="rounded-none w-full sm:w-1/2 mt-4 uppercase">
+                                <Button variant="outline" className="rounded-none uppercase">
                                     <CiHeart />
                                     Add to Wishlist
                                 </Button>
