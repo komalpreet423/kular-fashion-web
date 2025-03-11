@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ProductImages from '@/components/product/detail/images';
 import ProductVariants from '@/components/product/variants';
 import React from 'react';
@@ -12,6 +12,7 @@ import { Product, ProductSize, ProductColor } from '@/types/product';
 import ProductHeader from '@/components/product/detail/header';
 import ProductActions from '@/components/product/detail/actions';
 import RelatedProducts from '@/components/product/detail/related';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     const { slug } = React.use(params);
@@ -53,6 +54,15 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
         return <div>{error}</div>;
     }
 
+    const prices = product.sizes?.map((size) => size.price) || [];
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceText =
+        minPrice === maxPrice
+            ? formatCurrency(minPrice)
+            : `${formatCurrency(minPrice)} - ${formatCurrency(maxPrice)}`;
+
+
     // Handle selection changes
     const handleSelectionChange = (color: ProductColor | null, size: ProductSize | null) => {
         setSelectedColor(color);
@@ -67,7 +77,6 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
         // Add to wishlist logic here
     };
 
-
     return (
         <>
             <div className="container mx-auto py-8 px-4">
@@ -81,6 +90,14 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                     <div className="flex flex-col">
                         <ProductHeader productName={product.name} />
 
+                        {selectedSize && selectedColor ? <div className='text-gray-700'>
+                            {product.variants.find(
+                                (variant) =>
+                                    variant.product_color_id === selectedColor.id &&
+                                    variant.product_size_id === selectedSize.id
+                            )?.sku}
+                        </div> : null}
+
                         <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
 
@@ -88,7 +105,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                                 <div className="mb-0">
                                     <div dangerouslySetInnerHTML={{ __html: product.webInfo.summary }} />
                                 </div>}
-                            <div className="text-lg font-semibold">${product.price}</div>
+
+                            <div className="text-xl font-semibold mt-2">
+                                {!selectedSize ? priceText : formatCurrency(selectedSize.price)}
+                            </div>
 
                             {/* Color and Size Selection */}
                             <ProductVariants
@@ -98,7 +118,6 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                             />
 
                             <ProductActions isDisabled={!selectedColor || !selectedSize} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />
-
                             <ProductSummary description={product.webInfo.description} specifications={product.specifications} />
                         </div>
                     </div>

@@ -1,46 +1,7 @@
 'use client';
 import { apiBaseRoot } from '@/config';
+import { ProductColor, ProductSize } from '@/types/product';
 import { useState, useEffect } from 'react';
-
-interface ColorDetail {
-    id: number;
-    name: string;
-    slug: string;
-    short_name: string;
-    code: string;
-    ui_color_code: string;
-    status: string;
-}
-
-interface ProductColor {
-    id: number;
-    product_id: number;
-    color_id: number;
-    supplier_color_code: string;
-    supplier_color_name: string;
-    swatch_image_path: string | null;
-    detail: ColorDetail;
-}
-
-interface SizeDetail {
-    id: number;
-    size_scale_id: number;
-    name: string;
-    new_code: string;
-    old_code: string | null;
-    length: string | null;
-    status: string;
-}
-
-interface ProductSize {
-    id: number;
-    product_id: number;
-    size_id: number;
-    mrp: string;
-    web_price: string;
-    web_sale_price: string;
-    detail: SizeDetail;
-}
 
 interface ProductOptionsProps {
     colors: ProductColor[];

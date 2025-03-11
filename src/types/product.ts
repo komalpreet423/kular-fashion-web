@@ -31,9 +31,8 @@ export interface ProductSize {
     id: number;
     product_id: number;
     size_id: number;
-    mrp: string;
-    web_price: string;
-    web_sale_price: string;
+    price: number;
+    sale_price: number;
     detail: SizeDetail;
 }
 
@@ -45,6 +44,14 @@ export interface ProductColor {
     supplier_color_name: string;
     swatch_image_path: string | null;
     detail: ColorDetail;
+}
+
+export interface ProductVariant{
+    id: number,
+    product_color_id: number,
+    product_size_id: number,
+    sku: string,
+    quantity: number
 }
 
 export interface ProductImageProps {
@@ -62,11 +69,11 @@ export interface ProductBase {
     sale_price: number | null;
     default_image: string;
     brand: Brand;
+    article_code: string;
     images: ProductImageProps[];
 }
 
 export interface Product extends ProductBase {
-    article_code: string;
     manufacture_code: string;
     default_image: string;
     brand_id: number;
@@ -83,5 +90,6 @@ export interface Product extends ProductBase {
     specifications: any[];
     sizes: ProductSize[];
     colors: ProductColor[];
+    variants: ProductVariant[];
     relatedProducts: ProductBase[];
 }
