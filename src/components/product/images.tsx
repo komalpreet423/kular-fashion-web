@@ -167,7 +167,7 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
                                         alt={image.alt || 'default_alt'}
                                         width={100}
                                         height={100}
-                                        className={`rounded-md border-2 w-full h-full object-cover ${selectedIndex === index ? "border-blue-500" : "border-transparent"
+                                        className={`rounded-md border-2 w-full h-full object-cover ${selectedIndex === index ? "border-primary" : "border-transparent"
                                             } transition-all`}
                                     />
                                 </div>
@@ -208,7 +208,7 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
                                     alt={image.alt || 'default_alt'}
                                     width={100}
                                     height={100}
-                                    className={`rounded-md border-2 w-full h-full object-cover ${selectedIndex === index ? "border-blue-500" : "border-transparent"
+                                    className={`rounded-md border-2 w-full h-full object-cover ${selectedIndex === index ? "border-primary" : "border-transparent"
                                         } transition-all`}
                                 />
                             </div>

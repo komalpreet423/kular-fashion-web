@@ -11,6 +11,15 @@ import NoProductsFound from '@/components/product/not-found';
 import LoadingProduct from '@/components/product/loading-single';
 import ProductSummary from '@/components/product/summary';
 import { apiBaseUrl } from '@/config';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+
 
 interface Brand {
     id: number;
@@ -183,6 +192,22 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
 
                     {/* Product Details */}
                     <div className="flex flex-col">
+                        <Breadcrumb>
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink href="/products">Products</BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>{product.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
+
                         <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
 
