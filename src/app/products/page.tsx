@@ -14,32 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { debounce } from 'lodash';
 import { apiBaseUrl } from '@/config';
 
-interface Product {
-    id: number;
-    slug: string;
-    name: string;
-    price: number;
-    sale_price: number;
-    default_image: string;
-    brand: {
-        name: string;
-    },
-    images: any
-}
-
-interface Filter {
-    product_types: { id: string; name: string }[];
-    sizes: { id: string; name: string }[];
-    colors: { id: string; color_code: string }[];
-    price: { min: number; max: number };
-}
-
-interface Pagination {
-    current_page: number;
-    per_page: number;
-    total: number;
-    last_page: number;
-}
+import { Product, Filter, PaginationProps } from '@/types/interfaces';
 
 const ProductCardSkeleton = () => (
     <div className="flex flex-col space-y-3">
@@ -69,7 +44,7 @@ export default function ProductsPage() {
         colors: [],
         price: { min: 0, max: 0 },
     });
-    const [pagination, setPagination] = useState<Pagination | null>(null);
+    const [pagination, setPagination] = useState<PaginationProps | null>(null);
     const [selectedFilters, setSelectedFilters] = useState<{
         categories: string[];
         sizes: string[];

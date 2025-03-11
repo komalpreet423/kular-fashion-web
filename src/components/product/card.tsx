@@ -7,21 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiBaseRoot } from '@/config';
+import { ProductBase } from '@/types/interfaces';
 
-type ProductCardProps = {
-    id: number;
-    slug: string;
-    name: string;
-    price: number;
-    sale_price: number;
-    default_image: string;
-    brand: {
-        name: string;
-    }
-    images: any
-};
-
-const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCard: React.FC<ProductBase> = ({
     slug,
     name,
     price,
@@ -67,7 +55,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                                 alt={name}
                                 width={300}
                                 height={350}
-                                className="w-full h-64 object-cover"
+                                className="w-full h-64 rounded-none object-cover"
                                 priority 
                             />
                         </Link>

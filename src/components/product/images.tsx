@@ -6,23 +6,16 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { apiBaseRoot } from "@/config";
-
-// Define type for the image prop
-interface ImageProps {
-    path: string;
-    alt: string;
-    product_color_id: number;
-    is_default: boolean;
-}
+import { ProductImageProps } from "@/types/interfaces";
 
 interface ProductSliderProps {
-    images: ImageProps[];
+    images: ProductImageProps[];
     selectedColorId?: number;
     defaultImage?: string | null;
 }
 
 const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, defaultImage }) => {
-    const [filteredImages, setFilteredImages] = useState<ImageProps[]>([]);
+    const [filteredImages, setFilteredImages] = useState<ProductImageProps[]>([]);
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
     const mainSliderRef = useRef<Slider | null>(null);
     const thumbnailSliderRef = useRef<Slider | null>(null);
