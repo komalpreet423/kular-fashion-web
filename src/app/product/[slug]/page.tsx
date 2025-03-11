@@ -6,11 +6,11 @@ import ProductImages from '@/components/product/images';
 import ProductVariants from '@/components/product/variants';
 import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
-import { config } from '@/config';
 import { CiHeart } from 'react-icons/ci';
 import NoProductsFound from '@/components/product/not-found';
 import LoadingProduct from '@/components/product/loading-single';
 import ProductSummary from '@/components/product/summary';
+import { apiBaseUrl } from '@/config';
 
 interface Brand {
     id: number;
@@ -103,6 +103,7 @@ interface Product {
     name: string;
     article_code: string;
     manufacture_code: string;
+    default_image: string | null;
     brand_id: number;
     department_id: number;
     product_type_id: number;
@@ -137,7 +138,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const res = await fetch(`${config.apiBaseUrl}products/${slug}`);
+                const res = await fetch(`${apiBaseUrl}products/${slug}`);
                 if (!res.ok) {
                     throw new Error('Product not found');
                 }
@@ -165,14 +166,6 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
         return <div>{error}</div>;
     }
 
-    const productImages = [
-        { src: "/images/temp/product1.jpg", alt: "Product 1" },
-        { src: "/images/temp/product7.jpg", alt: "Product 7" },
-        { src: "/images/temp/product3.jpg", alt: "Product 3" },
-        { src: "/images/temp/product5.jpg", alt: "Product 5" },
-        { src: "/images/temp/product6.jpg", alt: "Product 6" },
-    ];
-
     // Handle selection changes
     const handleSelectionChange = (color: ProductColor | null, size: ProductSize | null) => {
         setSelectedColor(color);
@@ -182,10 +175,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     return (
         <>
             <div className="container mx-auto py-8 px-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                     {/* Product Image */}
                     <div className="flex justify-center">
-                        <ProductImages images={productImages} />
+                        <ProductImages images={product.images} selectedColorId={selectedColor?.id} defaultImage={product.default_image} />
                     </div>
 
                     {/* Product Details */}
@@ -193,10 +186,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                         <div className='px-0'>
                             <h4 className="text-2xl font-semibold">{product.name}</h4>
 
-                            {product.webInfo.summary && 
-                            <div className="mb-0">
-                                <div dangerouslySetInnerHTML={{ __html: product.webInfo.summary }} />
-                            </div> }
+                            {product.webInfo.summary &&
+                                <div className="mb-0">
+                                    <div dangerouslySetInnerHTML={{ __html: product.webInfo.summary }} />
+                                </div>}
                             <div className="text-lg font-semibold">${product.price}</div>
 
                             {/* Color and Size Selection */}
@@ -206,12 +199,12 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                                 onSelectionChange={handleSelectionChange}
                             />
 
-                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
-                                <Button className="rounded-none w-full sm:w-1/2 mt-4 uppercase" disabled={!selectedColor || !selectedSize}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                                <Button className="rounded-none uppercase" disabled={!selectedColor || !selectedSize}>
                                     <FiShoppingCart />
                                     Add to Cart
                                 </Button>
-                                <Button variant="outline" className="rounded-none w-full sm:w-1/2 mt-4 uppercase">
+                                <Button variant="outline" className="rounded-none uppercase">
                                     <CiHeart />
                                     Add to Wishlist
                                 </Button>
