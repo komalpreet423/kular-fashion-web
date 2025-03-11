@@ -74,6 +74,7 @@ export default function ProductsPage() {
         setLoading(true);
         try {
             const queryParams = new URLSearchParams({
+                filters: 'true',
                 per_page: perPage.toString(),
                 page: currentPage.toString(),
                 categories: selectedFilters.categories.join(','),
@@ -134,6 +135,11 @@ export default function ProductsPage() {
                 return {
                     ...prev,
                     [type]: currentFilter.filter((item) => item !== value),
+                };
+            } else if (type === 'price') {
+                return {
+                    ...prev,
+                    price: { min: 0, max: -1 },
                 };
             }
 
@@ -249,10 +255,10 @@ export default function ProductsPage() {
                                                 </motion.button>
                                             </div>
                                         ))}
-                                        {(selectedFilters.price.min !== selectedFilters.price.max) && (
+                                        {(selectedFilters.price.min !== selectedFilters.price.max && selectedFilters.price.max > -1) && (
                                             <div className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600">
                                                 <span className="text-sm text-gray-800 dark:text-gray-200">{`£${selectedFilters.price.min} - £${selectedFilters.price.max}`}</span>
-                                                <button className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300" onClick={() => handleRemoveFilter('price', { min: 0, max: 0 })}>
+                                                <button className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300" onClick={() => handleRemoveFilter('price', { min: 0, max: -1 })}>
                                                     <IoCloseSharp />
                                                 </button>
                                             </div>
