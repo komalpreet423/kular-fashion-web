@@ -18,9 +18,9 @@ const RelatedProducts = ({ relatedProducts }: RelatedProductsProps) => {
             <div
                 className={`grid gap-4 justify-center`}
                 style={{
-                    gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))`, // Auto-adjust card width
-                    maxWidth: `${gridColumns * 250}px`, // Limit max width based on number of items
-                    margin: '0 auto', // Center the grid container
+                    gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))`,
+                    maxWidth: `${gridColumns * 250}px`,
+                    margin: '0 auto',
                 }}
             >
                 {relatedProducts.map((product, index: number) => (
