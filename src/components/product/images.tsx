@@ -78,16 +78,16 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images }) => {
     return (
         <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row-reverse items-center md:items-start">
             {/* Main Image Slider */}
-            <div className="w-full md:w-5/6 mb-4 md:mb-0">
+            <div className="w-full md:w-5/6 md:mb-0">
                 <Slider {...settingsMain} ref={mainSliderRef}>
                     {images.map((image, index) => (
-                        <div key={index} className="relative w-full">
+                        <div key={index} className="relative w-[600px] h-[600px] rounded-lg overflow-hidden shadow-lg">
                             <Image
                                 src={image.src}
                                 alt={image.alt}
                                 width={600}
                                 height={600}
-                                className="object-contain w-full h-auto rounded-lg shadow-lg"
+                                className="w-full h-full object-cover"
                             />
                         </div>
                     ))}
@@ -154,7 +154,7 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images }) => {
 
             {/* Thumbnail Slider (Mobile - Horizontal) */}
             {isMobile && (
-                <div className="w-full mt-4 relative">
+                <div className="w-full mt-1 relative">
                     {/* Thumbnail Slider */}
                     <Slider {...settingsThumbnail} ref={thumbnailSliderRef}>
                         {images.map((image, index) => (
