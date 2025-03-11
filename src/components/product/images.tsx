@@ -123,12 +123,12 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
             <div className="w-full md:w-5/6 md:mb-0">
                 <Slider {...settingsMain} ref={mainSliderRef}>
                     {filteredImages.map((image, index) => (
-                        <div key={index} className="relative w-[600px] h-[600px] rounded-lg overflow-hidden shadow-lg">
+                        <div key={index} className="relative w-[600px] h-[450px] rounded-lg overflow-hidden shadow-lg">
                             <Image
                                 src={apiBaseRoot + image.path}
                                 alt={image.alt || 'default_alt'}
                                 width={600}
-                                height={600}
+                                height={450}
                                 className="w-full h-full object-cover"
                             />
                         </div>
