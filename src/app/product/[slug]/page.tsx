@@ -103,6 +103,7 @@ interface Product {
     name: string;
     article_code: string;
     manufacture_code: string;
+    default_image: string | null;
     brand_id: number;
     department_id: number;
     product_type_id: number;
@@ -165,14 +166,6 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
         return <div>{error}</div>;
     }
 
-    const productImages = [
-        { src: "/images/temp/product1.jpg", alt: "Product 1" },
-        { src: "/images/temp/product7.jpg", alt: "Product 7" },
-        { src: "/images/temp/product3.jpg", alt: "Product 3" },
-        { src: "/images/temp/product5.jpg", alt: "Product 5" },
-        { src: "/images/temp/product6.jpg", alt: "Product 6" },
-    ];
-
     // Handle selection changes
     const handleSelectionChange = (color: ProductColor | null, size: ProductSize | null) => {
         setSelectedColor(color);
@@ -185,7 +178,7 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                     {/* Product Image */}
                     <div className="flex justify-center">
-                        <ProductImages images={productImages} />
+                        <ProductImages images={product.images} selectedColorId={selectedColor?.id} defaultImage={product.default_image} />
                     </div>
 
                     {/* Product Details */}
