@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiBaseRoot } from '@/config';
-import { ProductBase } from '@/types/interfaces';
+import { ProductBase } from '@/types/product';
 
 const ProductCard: React.FC<ProductBase> = ({
     slug,

@@ -14,7 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { debounce } from 'lodash';
 import { apiBaseUrl } from '@/config';
 
-import { Product, Filter, PaginationProps } from '@/types/interfaces';
+import { Product } from '@/types/product';
+import { Filter, PaginationProps } from '@/types/filter';
 
 const ProductCardSkeleton = () => (
     <div className="flex flex-col space-y-3">

@@ -6,7 +6,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { apiBaseRoot } from "@/config";
-import { ProductImageProps } from "@/types/interfaces";
+import { ProductImageProps } from "@/types/product";
 
 interface ProductSliderProps {
     images: ProductImageProps[];

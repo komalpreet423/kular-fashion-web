@@ -1,22 +1,7 @@
-export interface Brand {
-    id: number;
-    name: string;
-    slug: string;
-    short_name: string;
-    image: string | null;
-    small_image: string | null;
-    medium_image: string | null;
-    large_image: string | null;
-}
-
-export interface Department {
-    id: number;
-    name: string;
-    slug: string;
-    image: string;
-    description: string;
-    status: string;
-}
+import { Brand } from "./brand";
+import { ColorDetail } from "./color";
+import { Department } from "./department";
+import { SizeDetail } from "./size";
 
 export interface ProductType {
     id: number;
@@ -42,16 +27,6 @@ export interface WebInfo {
     status: number;
 }
 
-export interface SizeDetail {
-    id: number;
-    size_scale_id: number;
-    name: string;
-    new_code: string;
-    old_code: string | null;
-    length: string | null;
-    status: string;
-}
-
 export interface ProductSize {
     id: number;
     product_id: number;
@@ -62,16 +37,6 @@ export interface ProductSize {
     detail: SizeDetail;
 }
 
-export interface ColorDetail {
-    id: number;
-    name: string;
-    slug: string;
-    short_name: string;
-    code: string;
-    ui_color_code: string;
-    status: string;
-}
-
 export interface ProductColor {
     id: number;
     product_id: number;
@@ -80,20 +45,6 @@ export interface ProductColor {
     supplier_color_name: string;
     swatch_image_path: string | null;
     detail: ColorDetail;
-}
-
-export interface Filter {
-    product_types: { id: string; name: string }[];
-    sizes: { id: string; name: string }[];
-    colors: { id: string; color_code: string }[];
-    price: { min: number; max: number };
-}
-
-export interface PaginationProps {
-    current_page: number;
-    per_page: number;
-    total: number;
-    last_page: number;
 }
 
 export interface ProductImageProps {
@@ -126,9 +77,6 @@ export interface Product extends ProductBase {
     sale_start: string | null;
     sale_end: string | null;
     season: string | null;
-    size_scale_id: number;
-    min_size_id: number;
-    max_size_id: number;
     department: Department;
     productType: ProductType;
     webInfo: WebInfo;

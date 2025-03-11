@@ -19,7 +19,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Product, ProductSize, ProductColor } from '@/types/interfaces';
+import { Product, ProductSize, ProductColor } from '@/types/product';
 
 const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     const { slug } = React.use(params);
