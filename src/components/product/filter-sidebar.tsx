@@ -17,7 +17,7 @@ interface Filter {
 }
 
 interface SelectedFilters {
-    categories: string[];
+    product_types: string[];
     sizes: string[];
     colors: string[];
     price: { min: number; max: number };
@@ -32,7 +32,7 @@ interface FilterSidebarProps {
 
 export default function FilterSidebar({ filters, selectedFilters, onFilterChange, onResetFilters }: FilterSidebarProps) {
     const [filterOpen, setFilterOpen] = useState({
-        categories: true,
+        product_types: true,
         sizes: true,
         colors: true,
         price: true,
@@ -76,7 +76,7 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                             <SheetDescription>Apply your filter preferences</SheetDescription>
                         </SheetHeader>
                         <div className="px-3">
-                            {['categories', 'sizes', 'colors', 'price'].map((filter) => (
+                            {['product_types', 'sizes', 'colors', 'price'].map((filter) => (
                                 shouldShowFilterSection(filter as keyof typeof filters) && (
                                     <div key={filter} className="mb-4">
                                         <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
@@ -84,7 +84,7 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                                             <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
                                         </div>
                                         <AnimatePresence>
-                                            {filter === 'categories' && filterOpen.categories && (
+                                            {filter === 'product_types' && filterOpen.product_types && (
                                                 <motion.div
                                                     initial={{ opacity: 0, height: 0 }}
                                                     animate={{ opacity: 1, height: 'auto' }}
@@ -93,7 +93,7 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                                                 >
                                                     {filters.product_types.map((category) => (
                                                         <div key={`category-m-${category.id}`} className="flex items-center space-x-2 mt-2">
-                                                            <Checkbox id={`category-m-${category.id}`} checked={selectedFilters.categories.includes(category.id)} onCheckedChange={() => onFilterChange('categories', toggleSelection(selectedFilters.categories, category.id))} />
+                                                            <Checkbox id={`category-m-${category.id}`} checked={selectedFilters.product_types.includes(category.id)} onCheckedChange={() => onFilterChange('product_types', toggleSelection(selectedFilters.product_types, category.id))} />
                                                             <label htmlFor={`category-m-${category.id}`} className="text-sm cursor-pointer">{category.name}</label>
                                                         </div>
                                                     ))}
@@ -153,15 +153,15 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                 </Sheet>
             </div>
             <div className="hidden md:block rounded-lg shadow-lg bg-white p-4">
-                {['categories', 'sizes', 'colors', 'price'].map((filter) => (
+                {['product_types', 'sizes', 'colors', 'price'].map((filter) => (
                     shouldShowFilterSection(filter as keyof typeof filters) && (
                         <div key={filter} className="mb-4">
                             <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
-                                <h3 className="text-md font-medium capitalize">{filter}</h3>
+                                <h3 className="text-md font-medium capitalize">{filter === 'product_types' ? `Product Types` : filter}</h3>
                                 <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
                             </div>
                             <AnimatePresence>
-                                {filter === 'categories' && filterOpen.categories && (
+                                {filter === 'product_types' && filterOpen.product_types && (
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
@@ -170,7 +170,7 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                                     >
                                         {filters.product_types.map((category) => (
                                             <div key={`category-d-${category.id}`} className="flex items-center space-x-2 mt-2">
-                                                <Checkbox id={`category-d-${category.id}`} checked={selectedFilters.categories.includes(category.id)} onCheckedChange={() => onFilterChange('categories', toggleSelection(selectedFilters.categories, category.id))} />
+                                                <Checkbox id={`category-d-${category.id}`} checked={selectedFilters.product_types.includes(category.id)} onCheckedChange={() => onFilterChange('product_types', toggleSelection(selectedFilters.product_types, category.id))} />
                                                 <label htmlFor={`category-d-${category.id}`} className="text-sm cursor-pointer">{category.name}</label>
                                             </div>
                                         ))}

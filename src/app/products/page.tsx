@@ -47,12 +47,12 @@ export default function ProductsPage() {
     });
     const [pagination, setPagination] = useState<PaginationProps | null>(null);
     const [selectedFilters, setSelectedFilters] = useState<{
-        categories: string[];
+        product_types: string[];
         sizes: string[];
         colors: string[];
         price: { min: number; max: number };
     }>({
-        categories: [],
+        product_types: [],
         sizes: [],
         colors: [],
         price: { min: 0, max: -1 },
@@ -63,7 +63,7 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState<Boolean>(true);
 
     const memoizedSelectedFilters = useMemo(() => selectedFilters, [
-        JSON.stringify(selectedFilters.categories),
+        JSON.stringify(selectedFilters.product_types),
         JSON.stringify(selectedFilters.sizes),
         JSON.stringify(selectedFilters.colors),
         selectedFilters.price.min,
@@ -77,7 +77,7 @@ export default function ProductsPage() {
                 filters: 'true',
                 per_page: perPage.toString(),
                 page: currentPage.toString(),
-                categories: selectedFilters.categories.join(','),
+                categories: selectedFilters.product_types.join(','),
                 sizes: selectedFilters.sizes.join(','),
                 colors: selectedFilters.colors.join(','),
             });
@@ -97,8 +97,15 @@ export default function ProductsPage() {
 
             const data = await res.json();
 
+            const tempFilters = {
+                product_types: data.filters.product_types.data,
+                sizes: data.filters.sizes.data,
+                colors: data.filters.colors,
+                price: { min: data.filters.price.min, max: data.filters.price.max },
+            };
+
             setProducts(data.data);
-            setFilters(data.filters);
+            setFilters(tempFilters);
             setError(null);
             setPagination(data.pagination);
         } catch (error) {
@@ -120,7 +127,7 @@ export default function ProductsPage() {
 
     const resetFilters = () => {
         setSelectedFilters({
-            categories: [],
+            product_types: [],
             sizes: [],
             colors: [],
             price: { min: filters.price.min, max: filters.price.max },
@@ -147,9 +154,9 @@ export default function ProductsPage() {
         });
     };
 
-    const getFilterNameById = (type: 'categories' | 'sizes' | 'colors', id: string) => {
+    const getFilterNameById = (type: 'product_types' | 'sizes' | 'colors', id: string) => {
         switch (type) {
-            case 'categories':
+            case 'product_types':
                 return filters.product_types.find((cat) => cat.id === id)?.name || id;
             case 'sizes':
                 return filters.sizes.find((size) => size.id === id)?.name || id;
@@ -161,7 +168,7 @@ export default function ProductsPage() {
     };
 
     const isAnyFilterSelected =
-        selectedFilters.categories.length > 0 ||
+        selectedFilters.product_types.length > 0 ||
         selectedFilters.sizes.length > 0 ||
         selectedFilters.colors.length > 0 ||
         ((selectedFilters.price.min !== filters.price.min ||
@@ -231,10 +238,10 @@ export default function ProductsPage() {
                             <div className="mb-4">
                                 {isAnyFilterSelected && (<>
                                     <div className="flex flex-wrap gap-3 mt-2">
-                                        {selectedFilters.categories.map((categoryId) => (
+                                        {selectedFilters.product_types.map((categoryId) => (
                                             <div key={categoryId} className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600">
-                                                <span className="text-sm text-gray-800 dark:text-gray-200">{getFilterNameById('categories', categoryId)}</span>
-                                                <motion.button className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300" onClick={() => handleRemoveFilter('categories', categoryId)} whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.9 }} animate={{ opacity: 1 }} initial={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+                                                <span className="text-sm text-gray-800 dark:text-gray-200">{getFilterNameById('product_types', categoryId)}</span>
+                                                <motion.button className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300" onClick={() => handleRemoveFilter('product_types', categoryId)} whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.9 }} animate={{ opacity: 1 }} initial={{ opacity: 0 }} transition={{ duration: 0.3 }}>
                                                     <IoCloseSharp />
                                                 </motion.button>
                                             </div>
