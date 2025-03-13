@@ -77,7 +77,7 @@ export default function ProductsPage() {
                 filters: 'true',
                 per_page: perPage.toString(),
                 page: currentPage.toString(),
-                categories: selectedFilters.product_types.join(','),
+                product_types: selectedFilters.product_types.join(','),
                 sizes: selectedFilters.sizes.join(','),
                 colors: selectedFilters.colors.join(','),
             });
