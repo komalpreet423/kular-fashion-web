@@ -13,7 +13,12 @@ const ProductVariants = ({ colors, sizes, onSelectionChange }: ProductOptionsPro
     const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
     const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
 
-    // Notify parent whenever selectedColor or selectedSize changes
+    useEffect(()=>{
+        if(colors.length===1){
+            setSelectedColor(colors[0]);
+        }
+    }, [])
+
     useEffect(() => {
         onSelectionChange(selectedColor, selectedSize);
     }, [selectedColor, selectedSize, onSelectionChange]);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ProductImages from '@/components/product/detail/images';
 import ProductVariants from '@/components/product/variants';
 import React from 'react';
@@ -32,6 +32,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                 }
                 const apiResponse = await res.json();
                 setProduct(apiResponse.data);
+
+               /*  if(apiResponse.data.colors.length===1){
+                    setSelectedColor(apiResponse.data.colors[0]);
+                } */
             } catch (err) {
                 setError((err as Error).message);
             } finally {
@@ -65,7 +69,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
 
     // Handle selection changes
     const handleSelectionChange = (color: ProductColor | null, size: ProductSize | null) => {
-        setSelectedColor(color);
+        if(color){
+            setSelectedColor(color);
+        }
+
         setSelectedSize(size);
     };
 
