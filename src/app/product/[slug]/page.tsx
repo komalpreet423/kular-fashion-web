@@ -124,9 +124,10 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                 </div>
             </div>
 
-            {product.relatedProducts.length ? (
+            {Array.isArray(product.relatedProducts) && product.relatedProducts.length > 0 ? (
                 <RelatedProducts relatedProducts={product.relatedProducts} />
-            ) : <></>}
+            ) : null}
+
         </>
     );
 };
