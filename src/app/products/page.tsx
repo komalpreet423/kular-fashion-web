@@ -132,6 +132,7 @@ export default function ProductsPage() {
             colors: [],
             price: { min: filters.price.min, max: filters.price.max },
         });
+        setCurrentPage(1);
     };
 
     const handleRemoveFilter = (type: keyof typeof selectedFilters, value: string | object) => {
@@ -152,6 +153,7 @@ export default function ProductsPage() {
 
             return prev;
         });
+        setCurrentPage(1);
     };
 
     const getFilterNameById = (type: 'product_types' | 'sizes' | 'colors', id: string) => {
@@ -193,6 +195,7 @@ export default function ProductsPage() {
                                 selectedFilters={selectedFilters}
                                 onFilterChange={(type, value) => {
                                     setSelectedFilters((prev) => ({ ...prev, [type]: value }));
+                                    setCurrentPage(1);
                                 }}
                                 onResetFilters={resetFilters}
                             />
