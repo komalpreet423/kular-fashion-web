@@ -97,12 +97,12 @@ const OrderSummary = () => {
             ) : (
                 <div className="mt-4 space-y-4">
                     {products.map((product) => (
-                        <div key={product.id} className="flex gap-4 border p-3 rounded-md">
+                        <div key={product.id} className="flex gap-4 rounded-md">
                             <Image
                                 src={product.image}
                                 alt={product.name}
-                                width={80}
-                                height={80}
+                                width={60}
+                                height={60}
                                 className="object-cover rounded"
                             />
                             <div className="flex-1">
@@ -111,7 +111,7 @@ const OrderSummary = () => {
                                 <div className="flex items-center mt-2 gap-2">
                                     <Button
                                         variant="outline"
-                                        size="sm"
+                                        size="xs"
                                         onClick={() => updateQuantity(product.id, -1)}
                                         disabled={product.quantity <= 1}
                                     >
@@ -120,7 +120,7 @@ const OrderSummary = () => {
                                     <span className="px-2">{product.quantity}</span>
                                     <Button
                                         variant="outline"
-                                        size="sm"
+                                        size="xs"
                                         onClick={() => updateQuantity(product.id, 1)}
                                         disabled={product.quantity >= product.maxQty}
                                     >
@@ -144,7 +144,7 @@ const OrderSummary = () => {
                 </div>
             )}
 
-            <div className="mt-6 border-t pt-4 space-y-2 text-sm">
+            <div className="mt-4 border-t pt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                     <span>Subtotal:</span>
                     <span>€{subtotal.toFixed(2)}</span>
@@ -162,7 +162,7 @@ const OrderSummary = () => {
             <button
                 disabled={products.length === 0}
                 onClick={handlePlaceOrder}
-                className={`w-full py-3 rounded-md mt-4 border transition cursor-pointer ${
+                className={`w-full py-3 rounded-none font-medium mt-4 border transition cursor-pointer ${
                     products.length === 0
                     ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                     : 'bg-primary text-white border-primary hover:bg-white hover:text-primary'

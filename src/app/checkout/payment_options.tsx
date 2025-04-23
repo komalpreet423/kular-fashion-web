@@ -54,53 +54,6 @@ const PaymentOptions = () => {
                         </div>
                     )}
                 </div>
-
-                {/* Net Banking */}
-                <div className={`border rounded-md ${selectedPayment === "netbanking" ? "border-primary bg-white" : "bg-white"} p-3`}>
-                    <label className="flex items-center cursor-pointer space-x-2" onClick={() => setSelectedPayment("netbanking")}>
-                        <input 
-                            type="radio" 
-                            name="payment" 
-                            value="netbanking" 
-                            checked={selectedPayment === "netbanking"}
-                            onChange={() => setSelectedPayment("netbanking")}
-                        />
-                        <span className="font-medium">Net Banking</span>
-                    </label>
-
-                    {selectedPayment === "netbanking" && (
-                        <div className="mt-3">
-                            <select className="w-full border p-2 rounded-md">
-                                <option>Select Your Bank</option>
-                                <option>State Bank of India</option>
-                                <option>HDFC Bank</option>
-                                <option>ICICI Bank</option>
-                                <option>Axis Bank</option>
-                                <option>Punjab National Bank</option>
-                            </select>
-                        </div>
-                    )}
-                </div>
-
-                {/* UPI */}
-                <div className="border p-3 rounded-md">
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                            type="radio"
-                            name="payment"
-                            value="upi"
-                            checked={selectedPayment === "upi"}
-                            onChange={() => setSelectedPayment("upi")}
-                        />
-                        <span className="font-medium">UPI (Google Pay / PhonePe / Paytm)</span>
-                    </label>
-                    {selectedPayment === "upi" && (
-                        <div className="mt-2">
-                            <input type="text" placeholder="Enter UPI ID" className="border p-2 w-full rounded-md" />
-                            <button className="bg-primary text-white px-4 py-2 mt-2 rounded-md">Pay Now</button>
-                        </div>
-                    )}
-                </div>
             </div>
         </div>
     );

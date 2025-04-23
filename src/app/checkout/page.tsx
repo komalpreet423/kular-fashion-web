@@ -13,10 +13,7 @@ const CheckoutPage = () => {
                 <PaymentOptions />
             </div>
 
-            {/* Right Section - Order Summary */}
-            <div className="md:w-1/3 border p-4 rounded-md shadow-sm">
                 <OrderSummary />
-            </div>
         </div>
     );
 };
