@@ -8,6 +8,7 @@ import QuantityBox from "@/components/cart/quantity-box";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { GrLock } from "react-icons/gr";
+import { useRouter } from 'next/navigation';
 
 interface CartItem {
     id: number;
@@ -19,6 +20,9 @@ interface CartItem {
 }
 
 const MiniCart: React.FC = () => {
+    const router = useRouter();
+    const [open, setOpen] = useState(false);
+
     const [cartItems, setCartItems] = useState<CartItem[]>([{
         id: 1, name: "Product 1", price: 49.99, quantity: 1, image: "/images/temp/product1.jpg", brand: "Brand A"
     }, {
@@ -33,8 +37,13 @@ const MiniCart: React.FC = () => {
         );
     };
 
+    const handleCheckout = () => {
+        setOpen(false);
+        router.push('/checkout');
+    };
+
     return (
-        <Sheet>
+        <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
                 <button className="relative cursor-pointer">
                     <BsCart size={24} className="text-gray-700" />
@@ -91,7 +100,7 @@ const MiniCart: React.FC = () => {
                         <span className="text-gray-900">£{cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}</span>
                     </div>
                     <motion.div whileHover={{ scale: 1.05 }}>
-                        <Button className="mt-4 w-full rounded-none uppercase"><GrLock size={16} /> Checkout Securely</Button>
+                        <Button className="mt-4 w-full rounded-none uppercase" onClick={handleCheckout}><GrLock size={16} /> Checkout Securely</Button>
                     </motion.div>
                 </div>
             </SheetContent>
