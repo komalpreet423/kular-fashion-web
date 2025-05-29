@@ -104,7 +104,42 @@ export default function ProductsPage() {
                 price: { min: data.filters.price.min, max: data.filters.price.max },
             };
 
-            setProducts(data.data);
+            const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+
+            // Clone wishlist so we can mutate it safely
+            const updatedWishlist = [...wishlist];
+
+            // Update the products in data.data based on wishlist and is_favourite logic
+            const updatedProducts = (data.data || []).map((product: any) => {
+                const alreadyInWishlist = wishlist.some((item: any) => item.id === product.id);
+
+                // Case 1: Product is in localStorage and is_favourite is false in data.data
+                if (product.is_favourite === false && alreadyInWishlist) {
+                    // Find the product in the wishlist and set is_favourite to true
+                    const index = updatedWishlist.findIndex((item: any) => item.id === product.id);
+                    if (index !== -1) {
+                        updatedWishlist[index].is_favourite = true;
+                    }
+
+                    // Create a new object with updated is_favourite property for the product
+                    return { ...product, is_favourite: true };
+                }
+
+                // Case 2: Product is not in localStorage and is_favourite is true in data.data
+                if (product.is_favourite === true && !alreadyInWishlist) {
+                    updatedWishlist.push({ ...product, is_favourite: true });
+                }
+
+                // For other cases, return the product as it is
+                return product;
+            });
+
+            // Update the localStorage with the modified wishlist
+            localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+
+            // Update products with the modified data
+            setProducts(updatedProducts);
+
             setFilters(tempFilters);
             setError(null);
             setPagination(data.pagination);

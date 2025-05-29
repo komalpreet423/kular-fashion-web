@@ -71,6 +71,7 @@ export interface ProductBase {
     brand: Brand;
     article_code: string;
     images: ProductImageProps[];
+    is_favourite: boolean;
 }
 
 export interface Product extends ProductBase {

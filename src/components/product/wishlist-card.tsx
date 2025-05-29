@@ -34,7 +34,6 @@ const ProductCard: React.FC<ProductBase> = ({
     }
 
     const handleFavoriteToggle = async () => {
-
         const user_details_str = localStorage.getItem("userDetails");
         const user_details = user_details_str ? JSON.parse(user_details_str) : null;
         const user_id = user_details ? user_details.id : null;
@@ -51,6 +50,7 @@ const ProductCard: React.FC<ProductBase> = ({
       
                 const data = await response.json();
       
+                
                 if (response.ok) {
                     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
 
@@ -89,17 +89,7 @@ const ProductCard: React.FC<ProductBase> = ({
                     toast.success('Product removed from wishlist.');
                 } else {
                     // Product doesn't exist, add it
-                    const newProduct = {
-                        id,
-                        slug,
-                        name,
-                        price,
-                        sale_price,
-                        default_image,
-                        brand,
-                        images,
-                        is_favourite: true
-                    };
+                    const newProduct = { id, isFavorited: true };
                     wishlist.push(newProduct);
                     setIsFavorited(true);
                     toast.success('Product added to wishlist.');

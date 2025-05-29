@@ -14,14 +14,42 @@ import Image from "next/image";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SearchModal from "@/components/SearchModal/search";
+import { apiBaseUrl } from '@/config';
+
 
 const Header: React.FC = () => {
+  const [departments, setDepartments] = useState([]);
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false);
   const [isSticky, setIsSticky] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    fetch(`${apiBaseUrl}menus`)
+      .then(async (res) => {
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || !contentType?.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(`Invalid response:\n${text}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data?.departments?.data)) {
+          setDepartments(data.departments.data);
+        } else {
+          console.error("Expected departments.data to be an array", data);
+          setDepartments([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch departments:", error);
+        setDepartments([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -43,7 +71,7 @@ const Header: React.FC = () => {
         setShowUserDropdown(false);
       }
     };
-  
+
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
@@ -195,9 +223,8 @@ const Header: React.FC = () => {
         </div>
       </div>
       <header
-        className={`w-full bg-white shadow-md p-4 ${
-          isSticky ? "fixed top-0 left-0 right-0 z-50" : "relative"
-        }`}
+        className={`w-full bg-white shadow-md p-4 ${isSticky ? "fixed top-0 left-0 right-0 z-50" : "relative"
+          }`}
       >
         <div className="w-full mx-auto flex items-center justify-between">
           {/* Left Side: Mobile Menu Button */}
@@ -229,10 +256,19 @@ const Header: React.FC = () => {
                   <Link href="/products" className="text-gray-700 hover:text-primary">
                     Shop By
                   </Link>
+                  {loading ? (
+                    <span>Loading...</span>
+                  ) : (
+                    departments.map((dept, index) => (
+                      <Link key={index} href={`/departments/${dept}`}>
+                        {dept}
+                      </Link>
+                    ))
+                  )}
                   <Link href="/products" className="text-gray-700 hover:text-primary">
                     Launches
                   </Link>
-                  <Link href="/products" className="text-gray-700 hover:text-primary">
+                  <Link href="/brands" className="text-gray-700 hover:text-primary">
                     Brands
                   </Link>
                   <Link href="/products" className="text-gray-700 hover:text-primary">
@@ -252,6 +288,9 @@ const Header: React.FC = () => {
                       Orders
                     </Link>
                   )}
+                  <Link href="/wishlist" className="text-gray-700 hover:text-primary">
+                    Wishlist
+                  </Link>
                 </nav>
               </SheetContent>
             </Sheet>
@@ -281,7 +320,7 @@ const Header: React.FC = () => {
             <Link href="/products" className="text-gray-700 hover:text-primary">
               Launches
             </Link>
-            <Link href="/products" className="text-gray-700 hover:text-primary">
+            <Link href="/brands" className="text-gray-700 hover:text-primary">
               Brands
             </Link>
             <Link href="/products" className="text-gray-700 hover:text-primary">
@@ -301,6 +340,9 @@ const Header: React.FC = () => {
                 Orders
               </Link>
             )}
+            <Link href="/wishlist" className="text-gray-700 hover:text-primary">
+              Wishlist
+            </Link>
           </nav>
 
           {/* Right Side: Search & Cart */}

@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 interface QuantityBoxProps {
     value: number;
     onChange: (newQuantity: number) => void;
+    max?: number;
 }
 
-export default function QuantityBox({ value, onChange }: QuantityBoxProps) {
+export default function QuantityBox({ value, onChange, max = Infinity }: QuantityBoxProps) {
     return (
         <div className="flex items-center border rounded-md h-8">
             {/* Decrease Button */}
@@ -34,6 +35,7 @@ export default function QuantityBox({ value, onChange }: QuantityBoxProps) {
                 size="sm"
                 className="px-2 h-full rounded-none border-l"
                 onClick={() => onChange(value + 1)}
+                disabled={value >= max}
             >
                 +
             </Button>

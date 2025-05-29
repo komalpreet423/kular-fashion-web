@@ -1,8 +1,8 @@
 "use client";
 
-import DeliveryAddresses from "./delivery_addresses";
-import PaymentOptions from "./payment_options";
-import OrderSummary from "./order_summary";
+import DeliveryAddresses from "./delivery-addresses/page";
+import PaymentOptions from "./payment-options/page";
+import OrderSummary from "./order-summary/page";
 
 const CheckoutPage = () => {
     return (
@@ -13,7 +13,10 @@ const CheckoutPage = () => {
                 <PaymentOptions />
             </div>
 
+            {/* Right Section - Order Summary */}
+            <div className="md:w-1/3 border p-4 rounded-md shadow-sm">
                 <OrderSummary />
+            </div>
         </div>
     );
 };

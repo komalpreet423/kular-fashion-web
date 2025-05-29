@@ -13,6 +13,7 @@ import ProductHeader from '@/components/product/detail/header';
 import ProductActions from '@/components/product/detail/actions';
 import RelatedProducts from '@/components/product/detail/related';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { toast } from "react-toastify";
 
 const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
     const { slug } = React.use(params);
@@ -33,9 +34,9 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                 const apiResponse = await res.json();
                 setProduct(apiResponse.data);
 
-               /*  if(apiResponse.data.colors.length===1){
-                    setSelectedColor(apiResponse.data.colors[0]);
-                } */
+                /*  if(apiResponse.data.colors.length===1){
+                     setSelectedColor(apiResponse.data.colors[0]);
+                 } */
             } catch (err) {
                 setError((err as Error).message);
             } finally {
@@ -69,19 +70,172 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
 
     // Handle selection changes
     const handleSelectionChange = (color: ProductColor | null, size: ProductSize | null) => {
-        if(color){
+        if (color) {
             setSelectedColor(color);
         }
 
         setSelectedSize(size);
     };
 
-    const handleAddToCart = () => {
-        // Add to cart logic here
+    const handleAddToCart = async () => {
+        console.log('asdf')
+        const user_details_str = localStorage.getItem("userDetails");
+        const user_details = user_details_str ? JSON.parse(user_details_str) : null;
+        const user_id = user_details ? user_details.id : null;
+
+        const token = localStorage.getItem("authToken");
+        const isLoggedIn = !!token;
+
+        const variant = product.variants.find(
+            (variant) =>
+                variant.product_color_id === selectedColor?.id &&
+                variant.product_size_id === selectedSize?.id
+        );
+
+        const variant_id = variant?.id;
+
+        if (!variant_id) {
+            toast.error("Selected variant not found.");
+            return;
+        }
+        if (variant.quantity <= 0) {
+            toast.error("Sorry! Quantity not available.");
+            return;
+        }
+
+        const quantity = 1;
+
+        try {
+            if (isLoggedIn && user_id) {
+                // Logged-in user: call API with fetch
+                const res = await fetch(`${apiBaseUrl}cart/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        user_id,
+                        variant_id,
+                        quantity,
+                    }),
+                });
+
+                if (!res.ok) {
+                    throw new Error('Something went wrong. Please try again.');
+                }
+
+                toast.success(`${product.name} added to cart successfully!`);
+            } else {
+                // Not logged in: handle cart in localStorage
+                const localCartStr = localStorage.getItem("cart");
+                let localCart = localCartStr ? JSON.parse(localCartStr) : {
+                    user_id: null,
+                    coupon_id: null,
+                    note: null,
+                    cartItems: [],
+                };
+
+                const existingItemIndex = localCart.cartItems.findIndex(
+                    (item: any) => item.variant_id === variant_id
+                );
+
+                if (existingItemIndex !== -1) {
+                    localCart.cartItems[existingItemIndex].quantity += 1;
+                } else {
+                    const colorDetail = product.colors.find(c => c.id === selectedColor?.id)?.detail.name;
+                    const sizeDetail = product.sizes.find(s => s.id === selectedSize?.id)?.detail.name;
+                    const variantData = product.variants.find(
+                        v => v.product_color_id === selectedColor?.id && v.product_size_id === selectedSize?.id
+                    );
+                    const totalQuantity = variantData?.quantity ?? 0;
+                    const imagePath = product.images?.[0]?.path ?? '';
+
+                    const maxId = localCart.cartItems.reduce((max: number, item: any) => Math.max(max, item.id || 0), 0);
+
+                    localCart.cartItems.push({
+                        id: maxId + 1, // auto-incremented ID
+                        cart_id: null,
+                        user_id: null,
+                        variant_id,
+                        quantity,
+                        name: product.name,
+                        color: colorDetail || '',
+                        size: sizeDetail || '',
+                        price: selectedSize?.price || product.price,
+                        total_quantity: totalQuantity,
+                        image: imagePath,
+                        brand: product.brand.name,
+                    });
+                }
+
+                localStorage.setItem("cart", JSON.stringify(localCart));
+                toast.success(`${product.name} added to cart successfully!`);
+            }
+        } catch (error) {
+            console.error("Add to cart error:", error);
+            toast.error("Something went wrong. Please try again after some time.");
+        }
     };
 
-    const handleAddToWishlist = () => {
-        // Add to wishlist logic here
+    const handleAddToWishlist = async () => {
+        const user_details_str = localStorage.getItem("userDetails");
+        const user_details = user_details_str ? JSON.parse(user_details_str) : null;
+        const user_id = user_details?.id;
+
+        try {
+            const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+            const productIndex = wishlist.findIndex((item: any) => item.id === product.id);
+
+            if (user_id) {
+                const response = await fetch(`${apiBaseUrl}wishlist/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ product_id: product.id, user_id }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (productIndex > -1) {
+                        wishlist.splice(productIndex, 1);
+                        toast.success('Product removed from wishlist');
+                    } else {
+                        wishlist.push({ id: product.id, is_favourite: true });
+                        toast.success('Product added to wishlist');
+                    }
+
+                    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+                } else {
+                    toast.error(data?.message || 'Something went wrong. Please try again later.');
+                }
+            } else {
+                if (productIndex > -1) {
+                    wishlist.splice(productIndex, 1);
+                    toast.success('Product removed from wishlist.');
+                } else {
+                    const newProduct = {
+                        id: product.id,
+                        slug: product.slug,
+                        name: product.name,
+                        price: product.price,
+                        sale_price: product.sale_price,
+                        default_image: product.default_image,
+                        brand: product.brand,
+                        images: product.images,
+                        is_favourite: true
+                    };
+                    wishlist.push(newProduct);
+                    toast.success('Product added to wishlist.');
+                }
+
+                localStorage.setItem('wishlist', JSON.stringify(wishlist));
+            }
+        } catch (error) {
+            toast.error('Error updating wishlist: ' + error);
+        }
     };
 
     return (
@@ -121,10 +275,11 @@ const ProductDetail = ({ params }: { params: Promise<{ slug: string }> }) => {
                             <ProductVariants
                                 colors={product.colors}
                                 sizes={product.sizes}
+                                variants={product.variants}
                                 onSelectionChange={handleSelectionChange}
                             />
 
-                            <ProductActions isDisabled={!selectedColor || !selectedSize} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />
+                            <ProductActions isDisabled={!selectedColor || !selectedSize} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} productId={product.id} />
                             <ProductSummary description={product.webInfo.description} specifications={product.specifications} />
                         </div>
                     </div>

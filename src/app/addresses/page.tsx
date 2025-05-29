@@ -1,114 +1,223 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import { apiBaseUrl } from '@/config';
+import NoAddressFound from '@/components/home/addresses-empty';
 
 interface Address {
     id: string;
     name: string;
-    addressLine1: string;
-    addressLine2: string;
+    country_code: string;
+    phone_no: string;
+    address_line_1: string;
+    address_line_2: string;
+    landmark: string;
     city: string;
     state: string;
-    zipCode: string;
+    zip_code: string;
     country: string;
-    isDefault: boolean;
+    is_default: boolean;
+    type: string;
+}
+
+interface AddressResponse {
+    id?: string;
+    name?: string;
+    country_code?: string;
+    phone_no?: string;
+    address_line_1?: string;
+    address_line_2?: string;
+    landmark?: string;
+    city?: string;
+    state?: string;
+    zip_code?: string;
+    country?: string;
+    is_default?: boolean;
+    type?: string;
+    message?: string;
+    errors?: Record<string, string[]>;
 }
 
 const AddressesPage = () => {
-    const [addresses, setAddresses] = useState<Address[]>([
-        {
-            id: "1",
-            name: "John Doe",
-            addressLine1: "123 Main St",
-            addressLine2: "Apt 4B",
-            city: "New York",
-            state: "NY",
-            zipCode: "10001",
-            country: "USA",
-            isDefault: true,
-        },
-        {
-            id: "2",
-            name: "Jane Smith",
-            addressLine1: "456 Elm St",
-            addressLine2: "",
-            city: "Los Angeles",
-            state: "CA",
-            zipCode: "90001",
-            country: "USA",
-            isDefault: false,
-        },
-        {
-            id: "3",
-            name: "Jane Smith",
-            addressLine1: "456 Elm St",
-            addressLine2: "",
-            city: "Los Angeles",
-            state: "CA",
-            zipCode: "90001",
-            country: "USA",
-            isDefault: false,
-        },
-        {
-            id: "4",
-            name: "Jane Smith",
-            addressLine1: "456 Elm St",
-            addressLine2: "",
-            city: "Los Angeles",
-            state: "CA",
-            zipCode: "90001",
-            country: "USA",
-            isDefault: false,
-        },
-        {
-            id: "5",
-            name: "Jane Smith",
-            addressLine1: "456 Elm St",
-            addressLine2: "",
-            city: "Los Angeles",
-            state: "CA",
-            zipCode: "90001",
-            country: "USA",
-            isDefault: false,
-        },
-    ]);
+    const [addresses, setAddresses] = useState<Address[]>([]);
 
     const [showForm, setShowForm] = useState<boolean>(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [formData, setFormData] = useState<Address>({
+        id: '',
+        name: '',
+        country_code: '',
+        phone_no: '',
+        address_line_1: '',
+        address_line_2: '',
+        landmark: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        country: '',
+        is_default: false,
+        type: '',
+    });
+
+    useEffect(() => {
+        fetchAddresses();
+    }, []);
+
+    const fetchAddresses = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${apiBaseUrl}customer-addresses`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+
+            setAddresses(data.data);
+        } catch (err) {
+            toast.error("Failed to fetch addresses.");
+        }
+    };
 
     const handleAddAddress = () => {
         setShowForm(true);
         setEditingAddress(null);
-        document.body.style.overflow = "hidden"; // Hide scrollbar
+        setFormData({
+            id: '',
+            name: '',
+            country_code: '',
+            phone_no: '',
+            address_line_1: '',
+            address_line_2: '',
+            landmark: '',
+            city: '',
+            state: '',
+            zip_code: '',
+            country: '',
+            is_default: false,
+            type: '',
+        });
+        setFormErrors({});
+        document.body.style.overflow = "hidden";
     };
 
     const handleEditAddress = (address: Address) => {
         setShowForm(true);
         setEditingAddress(address);
-        document.body.style.overflow = "hidden"; // Hide scrollbar
+        setFormData(address);
+        setFormErrors({});
+        document.body.style.overflow = "hidden";
     };
 
-    const handleSaveAddress = (address: Address) => {
-        if (editingAddress) {
-            setAddresses(
-                addresses.map((addr) =>
-                addr.id === editingAddress.id ? { ...addr, ...address } : addr
-                )
-            );
-            toast.success("Address updated successfully!");
-        } else {
-            setAddresses([
-                ...addresses,
-                { ...address, id: (addresses.length + 1).toString() },
-            ]);
-            toast.success("Address added successfully!");
+    const validateAddress = (address: Address) => {
+        const errors: Record<string, string> = {};
+        if (!address.name.trim()) errors.name = "Please enter name.";
+        if (!address.country_code.trim()) errors.country_code = "Please select a country code.";
+        if (!address.phone_no.trim()) errors.phone_no = "Please enter phone no.";
+        if (!address.address_line_1.trim()) errors.address_line_1 = "Please enter address line 1.";
+        if (!address.address_line_2.trim()) errors.address_line_2 = "Please enter address line 2.";
+        if (!address.landmark.trim()) errors.landmark = "Please enter landmark.";
+        if (!address.city.trim()) errors.city = "Please enter city name.";
+        if (!address.state.trim()) errors.state = "Please enter state name.";
+        if (!address.zip_code.trim()) {
+            errors.zip_code = "Please enter zip-code.";
+        } else if (!/^[0-9]{5,6}$/.test(address.zip_code.trim())) {
+            errors.zip_code = "This zip-code is invalid.";
         }
-        setShowForm(false);
-        document.body.style.overflow = ""; // Restore scrollbar
+        if (!address.country.trim()) errors.country = "Please enter country name.";
+        if (!address.type.trim()) errors.type = "Please enter address type.";
+        return errors;
     };
+
+    const handleSaveAddress = async (address: Address) => {
+        const errors = validateAddress(address);
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            toast.error("Please correct the errors in the form.");
+            return;
+        }
+
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+            toast.error("You are not logged in.");
+            return;
+        }
+
+        const payload = {
+            name: address.name,
+            country_code: address.country_code,
+            phone_no: address.phone_no,
+            address_line_1: address.address_line_1,
+            address_line_2: address.address_line_2,
+            landmark: address.landmark,
+            city: address.city,
+            state: address.state,
+            zip_code: address.zip_code,
+            country: address.country,
+            is_default: address.is_default,
+            type: address.type,
+        };
+
+        try {
+            let response: Response;
+            let result: AddressResponse;
+
+            if (editingAddress) {
+                response = await fetch(`${apiBaseUrl}customer-addresses/update/${editingAddress.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || "Failed to update address.");
+                }
+
+                toast.success("Address updated successfully!");
+                fetchAddresses();
+            } else {
+                response = await fetch(`${apiBaseUrl}customer-addresses/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                result = await response.json();
+
+                if (response.status === 422 && result.errors) {
+                    const errorMessages = Object.values(result.errors).flat().join(', ');
+                    toast.error(`Validation Error: ${errorMessages}`);
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(result.message || "Failed to add address.");
+                }
+
+                toast.success("Address added successfully!");
+                fetchAddresses();
+            }
+
+            setShowForm(false);
+            document.body.style.overflow = "";
+        } catch (error) {
+            console.error(error);
+            if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error("Something went wrong while saving the address.");
+            }
+        }
+    };
+      
 
     const handleCancel = () => {
         setShowForm(false);
@@ -121,16 +230,44 @@ const AddressesPage = () => {
         setAddressToDelete(address);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (addressToDelete) {
-            setAddresses(addresses.filter((a) => a.id !== addressToDelete.id));
+          try {
+            const token = localStorage.getItem("authToken");
+            await fetch(`${apiBaseUrl}customer-addresses/delete/${addressToDelete.id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+            });
             toast.success("Address deleted successfully!");
-            setShowDeleteModal(false);
-            setAddressToDelete(null);
+            fetchAddresses();
+          } catch (error) {
+            toast.error("Failed to delete address.");
+          }
+          setShowDeleteModal(false);
+          setAddressToDelete(null);
         }
     };
   
-
+    useEffect(() => {
+        if (editingAddress) {
+            setFormData({
+                id: editingAddress.id || '',
+                name: editingAddress.name || '',
+                country_code: editingAddress.country_code || '',
+                phone_no: editingAddress.phone_no || '',
+                address_line_1: editingAddress.address_line_1 || '',
+                address_line_2: editingAddress.address_line_2 || '',
+                landmark: editingAddress.landmark || '',
+                city: editingAddress.city || '',
+                state: editingAddress.state || '',
+                zip_code: editingAddress.zip_code || '',
+                country: editingAddress.country || '',
+                is_default: editingAddress.is_default || false,
+                type: editingAddress.type || '',
+            });
+        }
+    }, [editingAddress]);
+    
     return (
         <div className="min-h-[70vh] px-4 py-8">
             <h1 className="text-2xl font-bold mb-6">My Addresses</h1>
@@ -142,32 +279,36 @@ const AddressesPage = () => {
                 Add New Address
             </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {addresses.map((address) => (
-                    <div key={address.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex flex-col justify-between h-full">
-                        <div>
-                            <h3 className="text-lg font-semibold">{address.name}</h3>
-                            <p>
-                                {address.addressLine1}
-                                {address.addressLine2 && `, ${address.addressLine2}`},{" "}
-                                {address.city}, {address.state} {address.zipCode},{" "}
-                                {address.country}
-                            </p>
-                            {address.isDefault && (
-                                <span className="text-sm text-green-500">Default Address</span>
-                            )}
+            {addresses.length > 0 ? (<>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {addresses.map((address) => (
+                        <div key={address.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex flex-col justify-between h-full">
+                            <div>
+                                <h3 className="text-lg font-semibold">{address.name} - {address.type}</h3>
+                                <p>
+                                    {address.country_code} - {address.phone_no},
+                                    {address.address_line_1}
+                                    {address.address_line_2 && `, ${address.address_line_2}`},{" "}
+                                    {address.landmark},
+                                    {address.city}, {address.state} {address.zip_code},{" "}
+                                    {address.country}
+                                </p>
+                                {address.is_default && (
+                                    <span className="text-sm text-green-500">Default Address</span>
+                                )}
+                            </div>
+                            <div className="flex space-x-4 mt-4">
+                                <button onClick={() => handleEditAddress(address)} className="text-primary hover:bg-primary hover:text-white px-4 py-2 transition-all duration-300 cursor-pointer border-none rounded-lg">
+                                    Edit
+                                </button>
+                                <button onClick={() => handleDeleteAddress(address)} className="text-red-500 hover:bg-white hover:text-red-500 hover:border-red-500 px-4 py-2 transition-all duration-300 cursor-pointer border-2 rounded-lg">
+                                    Delete
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex space-x-4 mt-4">
-                            <button onClick={() => handleEditAddress(address)} className="text-primary hover:bg-primary hover:text-white px-4 py-2 transition-all duration-300 cursor-pointer border-none rounded-lg">
-                                Edit
-                            </button>
-                            <button onClick={() => handleDeleteAddress(address)} className="text-red-500 hover:bg-white hover:text-red-500 hover:border-red-500 px-4 py-2 transition-all duration-300 cursor-pointer border-2 rounded-lg">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            </>) : (<NoAddressFound />)}
 
 
             {showForm && (
@@ -187,88 +328,271 @@ const AddressesPage = () => {
                                 e.preventDefault();
                                 const formData = new FormData(e.target as HTMLFormElement);
                                 const newAddress: Address = {
-                                id: editingAddress ? editingAddress.id : "",
-                                name: formData.get("name") as string,
-                                addressLine1: formData.get("addressLine1") as string,
-                                addressLine2: formData.get("addressLine2") as string,
-                                city: formData.get("city") as string,
-                                state: formData.get("state") as string,
-                                zipCode: formData.get("zipCode") as string,
-                                country: formData.get("country") as string,
-                                isDefault: formData.get("isDefault") === "on",
+                                    id: editingAddress ? editingAddress.id : "",
+                                    name: formData.get("name") as string,
+                                    country_code: formData.get("country_code") as string,
+                                    phone_no: formData.get("phone_no") as string,
+                                    address_line_1: formData.get("address_line_1") as string,
+                                    address_line_2: formData.get("address_line_2") as string,
+                                    landmark: formData.get("landmark") as string,
+                                    city: formData.get("city") as string,
+                                    state: formData.get("state") as string,
+                                    zip_code: formData.get("zip_code") as string,
+                                    country: formData.get("country") as string,
+                                    is_default: formData.get("is_default") === "on",
+                                    type: formData.get("type") as string,
                                 };
+
                                 handleSaveAddress(newAddress);
                             }}
-                        >
+                            >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block mb-1">Name</label>
+                                    <label className="block mb-1">Name <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         name="name"
                                         defaultValue={editingAddress?.name || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, name: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.name && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { name, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
                                         className="w-full p-3 border border-gray-300 rounded-lg"
-                                        required
                                     />
+                                    {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
                                 </div>
                                 <div>
-                                    <label className="block mb-1">Address Line 1</label>
+                                    <label className="block mb-1">
+                                        Phone Number <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <select
+                                            name="country_code"
+                                            defaultValue={editingAddress?.country_code || "+91"}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setFormData(prev => ({ ...prev, country_code: value }));
+
+                                                if (formErrors.country_code && value.trim()) {
+                                                    setFormErrors(prev => {
+                                                        const { country_code, ...rest } = prev;
+                                                        return rest;
+                                                    });
+                                                }
+                                            }}
+                                            className="w-24 p-2 border border-gray-300 rounded-lg"
+                                        >
+                                            <option value="+91">+91 (IN)</option>
+                                            <option value="+1">+1 (US)</option>
+                                            <option value="+44">+44 (UK)</option>
+                                            <option value="+61">+61 (AU)</option>
+                                            <option value="+971">+971 (UAE)</option>
+                                        </select>
+                                        <input
+                                            type="text"
+                                            name="phone_no"
+                                            defaultValue={editingAddress?.phone_no || ""}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setFormData(prev => ({ ...prev, phone_no: value }));
+
+                                                if (formErrors.phone_no && value.trim()) {
+                                                    setFormErrors(prev => {
+                                                        const { phone_no, ...rest } = prev;
+                                                        return rest;
+                                                    });
+                                                }
+                                            }}
+                                            className="flex-1 p-3 border border-gray-300 rounded-lg"
+                                            placeholder="Enter phone number"
+                                        />
+                                    </div>
+                                    {formErrors.phone_no && <p className="text-red-500 text-sm mt-1">{formErrors.phone_no}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block mb-1">Address Line 1 <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
-                                        name="addressLine1"
-                                        defaultValue={editingAddress?.addressLine1 || ""}
+                                        name="address_line_1"
+                                        defaultValue={editingAddress?.address_line_1 || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, address_line_1: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.address_line_1 && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { address_line_1, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
                                         className="w-full p-3 border border-gray-300 rounded-lg"
-                                        required
                                     />
+                                    {formErrors.address_line_1 && <p className="text-red-500 text-sm mt-1">{formErrors.address_line_1}</p>}
                                 </div>
                                 <div>
-                                    <label className="block mb-1">Address Line 2</label>
+                                    <label className="block mb-1">Address Line 2 <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
-                                        name="addressLine2"
-                                        defaultValue={editingAddress?.addressLine2 || ""}
+                                        name="address_line_2"
+                                        defaultValue={editingAddress?.address_line_2 || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, address_line_2: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.address_line_2 && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { address_line_2, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
                                         className="w-full p-3 border border-gray-300 rounded-lg"
                                     />
+                                    {formErrors.address_line_2 && <p className="text-red-500 text-sm mt-1">{formErrors.address_line_2}</p>}
                                 </div>
                                 <div>
-                                    <label className="block mb-1">City</label>
+                                    <label className="block mb-1">Landmark <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="landmark"
+                                        defaultValue={editingAddress?.landmark || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, landmark: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.landmark && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { landmark, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
+                                        className="w-full p-3 border border-gray-300 rounded-lg"
+                                    />
+                                    {formErrors.landmark && <p className="text-red-500 text-sm mt-1">{formErrors.landmark}</p>}
+                                </div>
+                                <div>
+                                    <label className="block mb-1">City <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         name="city"
                                         defaultValue={editingAddress?.city || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, city: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.city && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { city, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
                                         className="w-full p-3 border border-gray-300 rounded-lg"
-                                        required
                                     />
+                                    {formErrors.city && <p className="text-red-500 text-sm mt-1">{formErrors.city}</p>}
                                 </div>
                                 <div>
-                                    <label className="block mb-1">State</label>
+                                    <label className="block mb-1">State <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         name="state"
                                         defaultValue={editingAddress?.state || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, state: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.state && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { state, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
                                         className="w-full p-3 border border-gray-300 rounded-lg"
-                                        required
                                     />
+                                    {formErrors.state && <p className="text-red-500 text-sm mt-1">{formErrors.state}</p>}
                                 </div>
                                 <div>
-                                    <label className="block mb-1">Zip Code</label>
+                                    <label className="block mb-1">Zip Code <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
-                                        name="zipCode"
-                                        defaultValue={editingAddress?.zipCode || ""}
+                                        name="zip_code"
+                                        defaultValue={editingAddress?.zip_code || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, zip_code: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.zip_code && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { zip_code, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
                                         className="w-full p-3 border border-gray-300 rounded-lg"
-                                        required
                                     />
+                                    {formErrors.zip_code && <p className="text-red-500 text-sm mt-1">{formErrors.zip_code}</p>}
                                 </div>
                                 <div>
-                                    <label className="block mb-1">Country</label>
+                                    <label className="block mb-1">Country <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         name="country"
                                         defaultValue={editingAddress?.country || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, country: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.country && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { country, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
                                         className="w-full p-3 border border-gray-300 rounded-lg"
-                                        required
                                     />
+                                    {formErrors.country && <p className="text-red-500 text-sm mt-1">{formErrors.country}</p>}
+                                </div>
+                                <div>
+                                    <label className="block mb-1">Address Type <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="type"
+                                        defaultValue={editingAddress?.type || ""}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData(prev => ({ ...prev, type: value }));
+                                    
+                                            // Clear error on input
+                                            if (formErrors.type && value.trim()) {
+                                                setFormErrors(prev => {
+                                                    const { type, ...rest } = prev;
+                                                    return rest;
+                                                });
+                                            }
+                                        }}
+                                        className="w-full p-3 border border-gray-300 rounded-lg"
+                                    />
+                                    {formErrors.type && <p className="text-red-500 text-sm mt-1">{formErrors.type}</p>}
                                 </div>
                             </div>
 
@@ -276,8 +600,8 @@ const AddressesPage = () => {
                                 <label className="flex items-center">
                                 <input
                                     type="checkbox"
-                                    name="isDefault"
-                                    defaultChecked={editingAddress?.isDefault || false}
+                                    name="is_default"
+                                    defaultChecked={editingAddress?.is_default || false}
                                     className="mr-2"
                                 />
                                     Set as default address

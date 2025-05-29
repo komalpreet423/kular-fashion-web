@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FaBox, FaHeart, FaMapMarkerAlt, FaUser } from "react-icons/fa";
 import OrdersPage from "./../orders/page";
 import AddressesPage from "./../addresses/page";
+import MyWishlistPage from "./../wishlist/page";
 
 interface UserDetails {
   name: string;
@@ -15,16 +16,26 @@ const MyAccountPage = () => {
   const [activeLink, setActiveLink] = useState("Orders");
 
   useEffect(() => {
-    const stored = localStorage.getItem("userDetails");
-    if (stored) {
+    const storedUser = localStorage.getItem("userDetails");
+    if (storedUser) {
       try {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(storedUser);
         setUserDetails(parsed);
       } catch (err) {
         console.error("Invalid userDetails JSON");
       }
     }
+
+    const storedLink = localStorage.getItem("activeAccountLink");
+    if (storedLink) {
+      setActiveLink(storedLink);
+    }
   }, []);
+
+  const handleLinkClick = (label: string) => {
+    setActiveLink(label);
+    localStorage.setItem("activeAccountLink", label);
+  };
 
   const getInitial = (name: string) => name?.charAt(0)?.toUpperCase() || "";
 
@@ -54,12 +65,12 @@ const MyAccountPage = () => {
           {links.map((link) => (
             <button
               key={link.label}
-              onClick={() => setActiveLink(link.label)}
+              onClick={() => handleLinkClick(link.label)}
               className={`flex items-center p-5 rounded-xl transition-all duration-300 group ${
                 activeLink === link.label
                   ? "bg-[var(--primary)] text-white"
                   : "bg-gray-200 hover:bg-[var(--primary)]"
-              } cursor-pointer`} // Added cursor-pointer here
+              } cursor-pointer`}
             >
               <div
                 className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all duration-300 ${
@@ -91,10 +102,15 @@ const MyAccountPage = () => {
         </div>
       )}
 
-      
-    {activeLink === "Addresses" && (
+      {activeLink === "Addresses" && (
         <div className="mt-6 px-8">
           <AddressesPage />
+        </div>
+      )}
+
+      {activeLink === "Your Wishlist" && (
+        <div className="mt-6 px-8">
+          <MyWishlistPage />
         </div>
       )}
     </div>
