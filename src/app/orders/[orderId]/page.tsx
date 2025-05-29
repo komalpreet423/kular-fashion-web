@@ -16,12 +16,12 @@ interface OrderDetails {
   id: string;
   orderDate: string;
   orderStatus:
-    | "placed"
-    | "packed"
-    | "shipped"
-    | "out-for-delivery"
-    | "delivered"
-    | "cancelled";
+  | "placed"
+  | "packed"
+  | "shipped"
+  | "out-for-delivery"
+  | "delivered"
+  | "cancelled";
   deliveredOn?: string;
   expectedDelivery?: string;
   items: Product[];
@@ -52,14 +52,14 @@ const statusSteps = [
 const OrderDetailsPage: React.FC = () => {
   const { orderId } = useParams();
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
-    const router = useRouter();
-  
-    useEffect(() => {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        router.replace("/");
-      }
-    }, []);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      router.replace("/");
+    }
+  }, []);
 
   useEffect(() => {
     if (orderId) {
@@ -146,11 +146,10 @@ const OrderDetailsPage: React.FC = () => {
             </p>
           </div>
           <div
-            className={`px-3 py-1 rounded-full font-semibold text-sm ${
-              orderDetails.orderStatus === "cancelled"
+            className={`px-3 py-1 rounded-full font-semibold text-sm ${orderDetails.orderStatus === "cancelled"
                 ? "bg-red-100 text-red-600"
                 : "bg-blue-100 text-blue-600"
-            }`}
+              }`}
           >
             {orderDetails.orderStatus.replace(/-/g, " ").toUpperCase()}
           </div>
@@ -232,68 +231,62 @@ const OrderDetailsPage: React.FC = () => {
 
         {/* Order Tracking Tree */}
         {/* Order Tracking Tree - Enhanced */}
-<div className="border-t pt-6">
-  <h3 className="text-lg font-semibold mb-4">Order Tracking</h3>
-  <div className="relative pl-8 space-y-10">
-    {statusSteps.map((step, idx) => {
-      const isCompleted = idx <= currentStepIndex;
-      const isLast = idx === statusSteps.length - 1;
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4">Order Tracking</h3>
+          <div className="relative flex justify-between w-full px-4">
+            {statusSteps.map((step, idx) => {
+              const isCompleted = idx <= currentStepIndex;
+              const isLast = idx === statusSteps.length - 1;
 
-      return (
-        <div key={step} className="relative flex items-start">
-          {/* Connector Line */}
-          {!isLast && (
-            <div
-              className={`absolute left-2 top-5 h-full w-0.5 ${
-                idx < currentStepIndex
-                  ? "bg-green-500"
-                  : "bg-gray-300"
-              }`}
-            />
-          )}
+              return (
+                <div key={step} className="relative flex flex-col items-center flex-1">
+                  {/* Connector Line to the next step */}
+                  {!isLast && (
+                    <div
+                      className={`absolute top-2.5 left-1/2 h-0.5 w-full ${idx < currentStepIndex ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                    />
+                  )}
 
-          {/* Step Dot */}
-          <div
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${
-              isCompleted
-                ? "bg-green-500 border-green-500 text-white"
-                : "bg-white border-gray-300 text-gray-300"
-            }`}
-          >
-            {isCompleted ? (
-              <svg
-                className="w-3 h-3"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <div className="w-2 h-2 bg-gray-300 rounded-full" />
-            )}
-          </div>
+                  {/* Step Dot */}
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${isCompleted
+                        ? "bg-green-500 border-green-500 text-white"
+                        : "bg-white border-gray-300 text-gray-300"
+                      }`}
+                  >
+                    {isCompleted ? (
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <div className="w-2 h-2 bg-gray-300 rounded-full" />
+                    )}
+                  </div>
 
-          {/* Text Info */}
-          <div className="ml-4">
-            <p
-              className={`font-medium ${
-                isCompleted ? "text-green-700" : "text-gray-500"
-              }`}
-            >
-              {step.replace(/-/g, " ").toUpperCase()}
-            </p>
-            <p className="text-sm text-gray-500">
-              {orderDetails.trackingDates[step] || "Pending"}
-            </p>
+                  {/* Text Info */}
+                  <div className="mt-2 text-center">
+                    <p
+                      className={`font-medium ${isCompleted ? "text-green-700" : "text-gray-500"
+                        }`}
+                    >
+                      {step.replace(/-/g, " ").toUpperCase()}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {orderDetails.trackingDates[step] || "Pending"}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      );
-    })}
-  </div>
-</div>
-
       </div>
     </div>
   );
