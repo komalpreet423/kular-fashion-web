@@ -342,7 +342,7 @@ const AddressesPage = () => {
                                     is_default: formData.get("is_default") === "on",
                                     type: formData.get("type") as string,
                                 };
-
+                                localStorage.setItem("selectedAddressId", newAddress.id);
                                 handleSaveAddress(newAddress);
                             }}
                             >
