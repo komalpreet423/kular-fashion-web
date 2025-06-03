@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { apiBaseUrl } from "@/config";
 
 interface Product {
   productName: string;
@@ -65,52 +66,69 @@ const OrderDetailsPage: React.FC = () => {
     if (orderId) {
       const fetchOrderDetails = async () => {
         try {
-          const fetchedOrderDetails: OrderDetails = {
-            id: orderId as string,
-            orderDate: "2025-04-01",
-            orderStatus: "shipped",
-            expectedDelivery: "2025-04-20",
-            deliveredOn: "",
-            items: [
-              {
-                productName: "Cotton Kurta",
-                quantity: 2,
-                price: 50.0,
-                imageUrl: "/images/temp/product1.jpg",
-              },
-              {
-                productName: "Silk Dupatta",
-                quantity: 1,
-                price: 50.0,
-                imageUrl: "/images/temp/product2.jpg",
-              },
-            ],
+          const token = localStorage.getItem("authToken");
+          if (!token) {
+            toast.error("Unauthorized");
+            router.replace("/");
+            return;
+          }
+
+          const response = await fetch(`${apiBaseUrl}order/show/${orderId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success || !result.data || result.data.length === 0) {
+            toast.error("Order not found");
+            return;
+          }
+
+          const order = result.data[0];
+
+          const mappedOrder: OrderDetails = {
+            id: order.unique_order_id,
+            orderDate: order.placed_at?.split(" ")[0] || "",
+            orderStatus: order.status,
+            deliveredOn: order.delivered_at?.split(" ")[0] || "",
+            expectedDelivery: "", // Fill if available in API
+            items: order.order_items.map((item: any) => ({
+              productName: item.product.name,
+              quantity: item.quantity,
+              price: parseFloat(item.price),
+              imageUrl: item.product.image || "/images/temp/default.jpg",
+            })),
             billing: {
-              subtotal: 150,
-              tax: 10,
-              shipping: 5,
-              total: 165,
+              subtotal: parseFloat(order.subtotal),
+              tax: parseFloat(order.tax),
+              shipping: parseFloat(order.shipping_charge),
+              total: parseFloat(order.total),
             },
             trackingDates: {
-              placed: "2025-04-01",
-              packed: "2025-04-02",
-              shipped: "2025-04-04",
-              "out-for-delivery": "",
-              delivered: "",
+              placed: order.placed_at?.split(" ")[0] || "",
+              packed: "", // If available
+              shipped: order.shipped_at?.split(" ")[0] || "",
+              "out-for-delivery": "", // If available
+              delivered: order.delivered_at?.split(" ")[0] || "",
             },
-            paymentMode: "UPI",
-            paymentDetails: "Paid via Google Pay (txn: GPAY123456789)",
+            paymentMode: order.payment_type || "N/A",
+            paymentDetails: order.transaction_id
+              ? `Transaction ID: ${order.transaction_id}`
+              : "No payment details available",
             addresses: {
-              packedFrom: "Warehouse A, Surat, Gujarat",
-              shippedFrom: "Courier Hub B, Mumbai, Maharashtra",
-              deliveryAddress:
-                "Vishal Sharma, 202, Green Avenue, Sector 45, Noida, UP - 201301",
+              packedFrom: "Warehouse Address (static)",
+              shippedFrom: "Shipping Hub Address (static)",
+              deliveryAddress: order.customer_address_id
+                ? `Address ID: ${order.customer_address_id}`
+                : "No address available",
             },
           };
 
-          setOrderDetails(fetchedOrderDetails);
+          setOrderDetails(mappedOrder);
         } catch (error) {
-          toast.error("Failed to fetch order details.");
+          toast.error("Error fetching order details.");
         }
       };
 
@@ -147,8 +165,8 @@ const OrderDetailsPage: React.FC = () => {
           </div>
           <div
             className={`px-3 py-1 rounded-full font-semibold text-sm ${orderDetails.orderStatus === "cancelled"
-                ? "bg-red-100 text-red-600"
-                : "bg-blue-100 text-blue-600"
+              ? "bg-red-100 text-red-600"
+              : "bg-blue-100 text-blue-600"
               }`}
           >
             {orderDetails.orderStatus.replace(/-/g, " ").toUpperCase()}
@@ -251,8 +269,8 @@ const OrderDetailsPage: React.FC = () => {
                   {/* Step Dot */}
                   <div
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${isCompleted
-                        ? "bg-green-500 border-green-500 text-white"
-                        : "bg-white border-gray-300 text-gray-300"
+                      ? "bg-green-500 border-green-500 text-white"
+                      : "bg-white border-gray-300 text-gray-300"
                       }`}
                   >
                     {isCompleted ? (
