@@ -4,16 +4,28 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react"; // Make sure you have lucide-react installed
+import { ArrowRight } from "lucide-react";
+import { apiBaseUrl } from "@/config";
 
 interface Order {
-  id: string;
-  orderDate: string;
-  totalAmount: number;
-  status: "Placed" | "In-Process" | "Cancelled" | "Delivered";
-  expectedDeliveryDate?: string;
+  id: number;
+  unique_order_id: string;
+  total: string;
+  status: string;
+  placed_at: string;
   deliveredOn?: string;
+  expectedDeliveryDate?: string;
+  order_items: {
+    id: number;
+    product: {
+      name: string;
+    };
+    quantity: number;
+    price: string;
+  }[];
+  orderDate: string;
   itemsCount: number;
+  totalAmount: number;
 }
 
 const OrdersPage: React.FC = () => {
@@ -32,33 +44,48 @@ const OrdersPage: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const fetchedOrders: Order[] = [
-          {
-            id: "ORD12345",
-            orderDate: "2025-04-01",
-            totalAmount: 150.0,
-            status: "Delivered",
-            deliveredOn: "2025-04-05",
-            itemsCount: 3,
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${apiBaseUrl}order/show`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          {
-            id: "ORD12346",
-            orderDate: "2025-04-05",
-            totalAmount: 200.0,
-            status: "In-Process",
-            expectedDeliveryDate: "2025-04-15",
-            itemsCount: 2,
-          },
-          {
-            id: "ORD12347",
-            orderDate: "2025-04-10",
-            totalAmount: 50.0,
-            status: "Cancelled",
-            itemsCount: 1,
-          },
-        ];
-        setOrders(fetchedOrders);
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch orders");
+
+        const result = await response.json();
+
+        const orders = result.data.map((order: any) => {
+          const itemsCount = order.order_items.reduce(
+            (acc: number, item: any) => acc + item.quantity,
+            0
+          );
+          return {
+            id: order.id,
+            unique_order_id: order.unique_order_id,
+            total: order.total,
+            status: order.status,
+            placed_at: order.placed_at,
+            deliveredOn: order.delivered_on || null,
+            expectedDeliveryDate: order.expected_delivery || null,
+            order_items: order.order_items.map((item: any) => ({
+              id: item.id,
+              quantity: item.quantity,
+              price: item.price,
+              product: {
+                name: item.product.name,
+              },
+            })),
+            orderDate: order.placed_at,
+            itemsCount,
+            totalAmount: parseFloat(order.total),
+          };
+        });
+
+        setOrders(orders);
       } catch (error) {
+        console.error("Error fetching orders:", error);
         toast.error("Failed to fetch orders.");
       }
     };
@@ -69,7 +96,7 @@ const OrdersPage: React.FC = () => {
   const filteredOrders = orders.filter((order) => {
     return (
       (statusFilter === "All" || order.status === statusFilter) &&
-      order.id.toLowerCase().includes(searchQuery.toLowerCase())
+      order.unique_order_id.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
@@ -94,32 +121,33 @@ const OrdersPage: React.FC = () => {
 
         {/* Search input */}
         <div className="flex items-center">
-        <input
-          type="text"
-          placeholder="Search by Order ID"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-64"
-        />
+          <input
+            type="text"
+            placeholder="Search by Order ID"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-64"
+          />
         </div>
       </div>
 
       {/* Filter Tabs */}
       <div className="mb-6">
         <div className="flex space-x-6">
-          {["All", "Placed", "Delivered", "In-Process", "Cancelled"].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                statusFilter === status
-                  ? "bg-primary text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-primary hover:text-white"
-              } cursor-pointer transition-all`}
-            >
-              {status}
-            </button>
-          ))}
+          {["All", "Placed", "Delivered", "In-Process", "Cancelled"].map(
+            (status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 rounded-lg font-medium ${statusFilter === status
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-primary hover:text-white"
+                  } cursor-pointer transition-all`}
+              >
+                {status}
+              </button>
+            )
+          )}
         </div>
       </div>
 
@@ -130,24 +158,45 @@ const OrdersPage: React.FC = () => {
               <div className="bg-white h-full flex flex-col justify-between border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 cursor-pointer">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Order ID: {order.id}</h2>
-                  <span className={`px-2 py-1 text-sm rounded ${getStatusColor(order.status)}`}>
+                  <h2 className="text-lg font-semibold">
+                    Order ID: {order.unique_order_id}
+                  </h2>
+                  <span
+                    className={`px-2 py-1 text-sm rounded ${getStatusColor(
+                      order.status
+                    )}`}
+                  >
                     {order.status}
                   </span>
                 </div>
 
                 {/* Details */}
                 <div className="text-sm text-gray-700 space-y-1">
-                  <p>Placed on: <span className="font-medium">{order.orderDate}</span></p>
-                  <p>Items: <span className="font-medium">{order.itemsCount}</span></p>
+                  <p>
+                    Placed on:{" "}
+                    <span className="font-medium">{order.orderDate}</span>
+                  </p>
+                  <p>
+                    Items:{" "}
+                    <span className="font-medium">{order.itemsCount}</span>
+                  </p>
 
                   {order.status === "Delivered" && order.deliveredOn && (
-                    <p>Delivered on: <span className="font-medium">{order.deliveredOn}</span></p>
+                    <p>
+                      Delivered on:{" "}
+                      <span className="font-medium">{order.deliveredOn}</span>
+                    </p>
                   )}
 
-                  {order.status !== "Delivered" && order.expectedDeliveryDate && (
-                    <p>Expected Delivery: <span className="font-medium">{order.expectedDeliveryDate}</span></p>
-                  )}
+                  {order.status !== "Delivered" &&
+                    order.expectedDeliveryDate && (
+                      <p>
+                        Expected Delivery:{" "}
+                        <span className="font-medium">
+                          {order.expectedDeliveryDate}
+                        </span>
+                      </p>
+                    )}
                 </div>
 
                 {/* Footer */}
