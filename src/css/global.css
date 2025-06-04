@@ -140,3 +140,6 @@
 .header-top svg {
   font-size: 18px;
 }
+.custom-shadow{
+ box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}

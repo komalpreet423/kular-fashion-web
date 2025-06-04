@@ -54,7 +54,7 @@ const OrderSummary = () => {
     
         const payload = {
           user_id: userDetails?.id || null,
-          cart: cart.cartItems.length ? cart : null,
+          cart: cart?.cartItems?.length ? cart : null,
           coupon_code: couponCode,
           delivery_address_id: addressId,
           payment_mode: paymentMode,
@@ -67,6 +67,7 @@ const OrderSummary = () => {
           },
           body: JSON.stringify(payload),
         });
+        
     
         if (response.ok) {
           toast.success("Order placed successfully!");
