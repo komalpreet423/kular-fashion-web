@@ -455,57 +455,60 @@ const MiniCart: React.FC = () => {
           </ul>
         </motion.div>
 
-        <div className="border-t p-4 bg-white sticky bottom-0 w-full">
-
-            {/* Promo Code Section */}
+     {cartItems.length > 0 && (
+          <div className="border-t p-4 bg-white sticky bottom-0 w-full">
             <div className="flex items-center justify-between text-sm font-medium text-primary cursor-pointer mb-3 mt-2" onClick={() => setPromoDropdownOpen(!promoDropdownOpen)}>
-            <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                 <FaCreditCard className="text-primary" />
                 <span>Add Promo Code / Gift Card</span>
-            </div>
-            <span className="text-xs">{promoDropdownOpen ? "▲" : "▼"}</span>
+              </div>
+              <span className="text-xs">{promoDropdownOpen ? "▲" : "▼"}</span>
             </div>
 
             {promoDropdownOpen && (
-            <div className="mb-4 space-y-1">
+              <div className="mb-4 space-y-1">
                 <div className="flex gap-2">
-                <input
+                  <input
                     value={promoCodeInput}
                     onChange={handlePromoCodeChange}
                     type="text"
                     className="w-full border p-2 text-sm rounded"
                     placeholder="Enter promo code"
-                />
-                <Button onClick={applyPromoCode} className="py-2 px-4 text-white bg-primary hover:bg-primary-dark">
+                  />
+                  <Button onClick={applyPromoCode} className="py-2 px-4 text-white bg-primary hover:bg-primary-dark">
                     {buttonText}
-                </Button>
+                  </Button>
                 </div>
                 {promoMessage && (
-                <div className={`text-sm ${promoSuccess ? "text-green-600" : "text-red-600"}`}>
+                  <div className={`text-sm ${promoSuccess ? "text-green-600" : "text-red-600"}`}>
                     {promoMessage}
-                </div>
+                  </div>
                 )}
-            </div>
+              </div>
             )}
-          <div className="flex justify-between">
-            <span className="text-lg">Subtotal:</span>
-            <span className="text-gray-900">£{subTotal.toFixed(2)}</span>
-          </div>
-          {Number(discount) > 0 && (
+
             <div className="flex justify-between">
-              <span className="text-lg">Discount:</span>
-              <span className="text-gray-900">£{discount}</span>
+              <span className="text-lg">Subtotal:</span>
+              <span className="text-gray-900">£{subTotal.toFixed(2)}</span>
             </div>
-          )}
-          <div className="flex justify-between">
-            <span className="text-lg">Total:</span>
-            <span className="text-gray-900">£{total}</span>
-          </div>
+            {Number(discount) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-lg">Discount:</span>
+                <span className="text-gray-900">£{discount}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-lg">Total:</span>
+              <span className="text-gray-900">£{total}</span>
+            </div>
 
             <motion.div whileHover={{ scale: 1.05 }}>
-                <Button className="mt-4 w-full rounded-none uppercase" onClick={handleCheckout}><GrLock size={16} /> Checkout Securely</Button>
+              <Button className="mt-4 w-full rounded-none uppercase" onClick={handleCheckout}>
+                <GrLock size={16} /> Checkout Securely
+              </Button>
             </motion.div>
-        </div>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
