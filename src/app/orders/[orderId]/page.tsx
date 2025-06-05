@@ -253,7 +253,7 @@ const OrderDetailsPage: React.FC = () => {
           <h3 className="text-lg font-semibold mb-4">Order Tracking</h3>
           <div className="relative flex justify-between w-full px-4">
             {statusSteps.map((step, idx) => {
-              const isCompleted = idx <= currentStepIndex;
+              const isCompleted = idx === 0;
               const isLast = idx === statusSteps.length - 1;
 
               return (
