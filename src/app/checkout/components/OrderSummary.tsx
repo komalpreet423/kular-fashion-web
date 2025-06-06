@@ -20,13 +20,7 @@ interface CartItem {
   image: string;
   brand: string;
 }
-interface Order {
-  id: number;
-  unique_order_id: string;
-  status: string;
-  total: string;
-  placed_at: string;
-}
+
 const OrderSummary = () => {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
@@ -34,7 +28,6 @@ const OrderSummary = () => {
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { orderId } = useParams<{ orderId: string }>(); 
- 
 
   useEffect(() => {
     setIsClient(true);
@@ -62,7 +55,7 @@ const OrderSummary = () => {
 
       const payload = {
         user_id: userDetails?.id || null,
-        cart: cart?.cartItems?.length ? cart : null,
+        cart: cart?.cart_items?.length ? cart : null,
         coupon_code: couponCode,
         delivery_address_id: addressId,
         payment_mode: paymentMode,
@@ -75,11 +68,10 @@ const OrderSummary = () => {
         },
         body: JSON.stringify(payload),
       });
-
+          const result = await response.json();
+          console.log(result);
       if (response.ok) {
-        const result = await response.json();
-        const newOrderId= result.order_id.id;
-        console.log(newOrderId);
+        const newOrderId = result.order_id; 
         toast.success("Order placed successfully!");
         localStorage.removeItem("cart");
         localStorage.removeItem("coupon_code");
@@ -139,10 +131,11 @@ const OrderSummary = () => {
           }) || [];
 
           setCartItems(cartItems);
+          
         } else {
           const cart_str = localStorage.getItem("cart");
           const cart = cart_str ? JSON.parse(cart_str) : null;
-          const cart_items = Array.isArray(cart?.cartItems) ? cart.cartItems : [];
+          const cart_items = Array.isArray(cart?.cart_items) ? cart.cart_items : [];
 
           const cartItems = cart_items?.map((cartItem: any) => {
             const image = cartItem?.image ? `${apiBaseRoot}${cartItem.image}` : "/images/temp/product1.jpg";
@@ -162,6 +155,7 @@ const OrderSummary = () => {
           }) || [];
 
           setCartItems(cartItems);
+              
         }
       } catch (err) {
         console.error("Error fetching cart:", err);

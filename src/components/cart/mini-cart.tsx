@@ -175,7 +175,7 @@ const MiniCart: React.FC = () => {
             const cart_str = localStorage.getItem("cart");
 
             const cart = cart_str ? JSON.parse(cart_str) : null;
-            const cart_items = Array.isArray(cart?.cartItems) ? cart.cartItems : [];
+            const cart_items = Array.isArray(cart?.cart_items) ? cart.cart_items : [];
 
             const cartItems = cart_items?.map((cartItem: any) => {
                 const imageFile = cartItem?.image;
@@ -292,6 +292,7 @@ const MiniCart: React.FC = () => {
   
 
   const applyPromoCode = async () => {
+    
 
     const userDetailsStr = localStorage.getItem("userDetails");
     const userDetails = userDetailsStr ? JSON.parse(userDetailsStr) : null;
