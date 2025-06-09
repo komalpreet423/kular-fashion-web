@@ -7,6 +7,7 @@ import PaymentSummary from '@/components/checkout/payment-summary';
 import CartButtons from '@/components/checkout/cart-buttons';
 import { apiBaseUrl, apiBaseRoot } from "@/config";
 import { toast } from "react-toastify";
+import axios from 'axios';
 
 interface CartItem {
   id: number;
@@ -27,7 +28,7 @@ const OrderSummary = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const { orderId } = useParams<{ orderId: string }>(); 
+  const { orderId } = useParams<{ orderId: string }>();
 
   useEffect(() => {
     setIsClient(true);
@@ -38,7 +39,7 @@ const OrderSummary = () => {
   const handlePlaceOrder = async () => {
     try {
       const userDetails = JSON.parse(localStorage.getItem("userDetails") || "null");
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]") || null;
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
       const couponCode = localStorage.getItem("coupon_code") || null;
       const addressId = localStorage.getItem("selectedAddressId");
       const paymentMode = localStorage.getItem("selectedPaymentMethod");
@@ -61,32 +62,24 @@ const OrderSummary = () => {
         payment_mode: paymentMode,
       };
 
-      const response = await fetch(`${apiBaseUrl}place-order`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      const { data: result } = await axios.post(`${apiBaseUrl}place-order`, payload, {
+        headers: { "Content-Type": "application/json" },
       });
-          const result = await response.json();
-          console.log(result);
-      if (response.ok) {
-        const newOrderId = result.order_id; 
-        toast.success("Order placed successfully!");
-        localStorage.removeItem("cart");
-        localStorage.removeItem("coupon_code");
-        localStorage.removeItem("coupon_discount");
-        localStorage.removeItem("final_after_coupon_code");
-        setShowSuccess(true);
-        setTimeout(() => {
-          router.push(`/orders/${newOrderId}`); 
-        }, 1000);
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || "Failed to place order.");
-      }
-    } catch (error) {
-      toast.error("Something went wrong while placing the order.");
+
+      const newOrderId = result.order_id;
+      toast.success("Order placed successfully!");
+      localStorage.removeItem("cart");
+      localStorage.removeItem("coupon_code");
+      localStorage.removeItem("coupon_discount");
+      localStorage.removeItem("final_after_coupon_code");
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        router.push(`/orders/${newOrderId}`);
+      }, 1000);
+    } catch (error: any) {
+      const errMsg = error?.response?.data?.message || "Something went wrong while placing the order.";
+      toast.error(errMsg);
       console.error(error);
     }
   };
@@ -100,16 +93,12 @@ const OrderSummary = () => {
 
       try {
         if (token && user_id) {
-          const res = await fetch(`${apiBaseUrl}cart/show`, {
-            method: "GET",
+          const { data: json } = await axios.get(`${apiBaseUrl}cart/show`, {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
           });
-
-          if (!res.ok) throw new Error("Failed to fetch cart items");
-          const json = await res.json();
 
           const cartItems = json.cart?.cart_items?.map((cartItem: any) => {
             const product = cartItem.variant?.product;
@@ -131,13 +120,12 @@ const OrderSummary = () => {
           }) || [];
 
           setCartItems(cartItems);
-          
         } else {
           const cart_str = localStorage.getItem("cart");
           const cart = cart_str ? JSON.parse(cart_str) : null;
           const cart_items = Array.isArray(cart?.cart_items) ? cart.cart_items : [];
 
-          const cartItems = cart_items?.map((cartItem: any) => {
+          const cartItems = cart_items.map((cartItem: any) => {
             const image = cartItem?.image ? `${apiBaseRoot}${cartItem.image}` : "/images/temp/product1.jpg";
 
             return {
@@ -152,10 +140,9 @@ const OrderSummary = () => {
               brand: cartItem?.brand || "Unknown Brand",
               total_quantity: cartItem?.total_quantity || 10,
             };
-          }) || [];
+          });
 
           setCartItems(cartItems);
-              
         }
       } catch (err) {
         console.error("Error fetching cart:", err);

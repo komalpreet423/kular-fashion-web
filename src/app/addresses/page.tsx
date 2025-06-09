@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { apiBaseUrl } from "@/config";
+import axios from "axios";
 import NoAddressFound from "@/components/home/addresses-empty";
 
 interface Address {
@@ -92,9 +93,8 @@ const AddressesPage = () => {
 
   const fetchCountries = async () => {
     try {
-      const res = await fetch(`${apiBaseUrl}countries`);
-      const data = await res.json();
-      setCountries(data);
+      const res = await axios.get(`${apiBaseUrl}countries`);
+      setCountries(res.data);
     } catch {
       toast.error("Failed to fetch countries.");
     }
@@ -102,9 +102,8 @@ const AddressesPage = () => {
 
   const fetchStates = async (countryId: number) => {
     try {
-      const res = await fetch(`${apiBaseUrl}states/${countryId}`);
-      const data = await res.json();
-      setStates(data);
+      const res = await axios.get(`${apiBaseUrl}states/${countryId}`);
+      setStates(res.data);
     } catch {
       toast.error("Failed to fetch states.");
     }
@@ -112,12 +111,10 @@ const AddressesPage = () => {
   const fetchAddresses = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch(`${apiBaseUrl}customer-addresses`, {
+      const res = await axios.get(`${apiBaseUrl}customer-addresses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-
-      setAddresses(data.data);
+      setAddresses(res.data.data);
     } catch (err) {
       toast.error("Failed to fetch addresses.");
     }
@@ -206,60 +203,53 @@ const AddressesPage = () => {
     };
 
     try {
-      let response: Response;
-      let result: AddressResponse;
+      let response;
+      let result;
 
       if (editingAddress) {
-        response = await fetch(
+        response = await axios.put(
           `${apiBaseUrl}customer-addresses/update/${editingAddress.id}`,
+          payload,
           {
-            method: "PUT",
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(payload),
           }
         );
-        result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message || "Failed to update address.");
-        }
-
+        result = response.data;
         toast.success("Address updated successfully!");
         fetchAddresses();
       } else {
-        response = await fetch(`${apiBaseUrl}customer-addresses/add`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-        result = await response.json();
+        response = await axios.post(
+          `${apiBaseUrl}customer-addresses/add`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        result = response.data;
 
-        if (response.status === 422 && result.errors) {
-          const errorMessages = Object.values(result.errors).flat().join(", ");
-          toast.error(`Validation Error: ${errorMessages}`);
-          return;
+        if (response.status === 200 || response.status === 201) {
+          toast.success("Address added successfully!");
+          fetchAddresses();
         }
-
-        if (!response.ok) {
-          throw new Error(result.message || "Failed to add address.");
-        }
-
-        toast.success("Address added successfully!");
-        fetchAddresses();
       }
 
       setShowForm(false);
       document.body.style.overflow = "";
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      if (error instanceof Error) {
-        toast.error(error.message);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 422 && error.response.data.errors) {
+          const errorMessages = Object.values(error.response.data.errors)
+            .flat()
+            .join(", ");
+          toast.error(`Validation Error: ${errorMessages}`);
+        } else {
+          toast.error(error.response?.data?.message || "Something went wrong.");
+        }
       } else {
         toast.error("Something went wrong while saving the address.");
       }
@@ -281,10 +271,9 @@ const AddressesPage = () => {
     if (addressToDelete) {
       try {
         const token = localStorage.getItem("authToken");
-        await fetch(
+        await axios.delete(
           `${apiBaseUrl}customer-addresses/delete/${addressToDelete.id}`,
           {
-            method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           }
         );

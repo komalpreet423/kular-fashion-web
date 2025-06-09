@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Mail, User, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiBaseUrl } from '@/config';
+import axios from 'axios'; 
 
 export default function ContactPage() {
   const [name, setName] = useState('');
@@ -29,7 +30,7 @@ export default function ContactPage() {
     return errors;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     const validationErrors = validateContactForm({ name, email, message });
@@ -42,34 +43,26 @@ export default function ContactPage() {
     setErrors({});
 
     try {
-      const response = await fetch(`${apiBaseUrl}contact-us`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, message }),
+      const response = await axios.post(`${apiBaseUrl}contact-us`, {
+        name,
+        email,
+        message,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMsg =
-          errorData?.message || 'Something went wrong. Please try again.';
-        setError(errorMsg);
-        return;
-      }
-
-      const data = await response.json();
-      console.log('Success:', data);
+      console.log('Success:', response.data);
       setSubmitted(true);
       setName('');
       setEmail('');
       setMessage('');
+
       setTimeout(() => {
         setSubmitted(false);
       }, 2000);
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Network error. Please try again later.');
+    } catch (err: any) {
+      console.error('Axios error:', err);
+      const errorMsg =
+        err?.response?.data?.message || 'Something went wrong. Please try again.';
+      setError(errorMsg);
     }
   };
 

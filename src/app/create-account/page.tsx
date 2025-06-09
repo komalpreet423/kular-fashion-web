@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiBaseUrl } from "@/config";
 import { toast, ToastContainer } from "react-toastify";
+import axios from "axios";
 
 const CreateAccountPage = () => {
   const [name, setName] = useState("");
@@ -44,7 +45,7 @@ const CreateAccountPage = () => {
     return newErrors;
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
 
@@ -55,18 +56,11 @@ const CreateAccountPage = () => {
 
     setLoading(true);
     try {
-      const res = await fetch(`${apiBaseUrl}register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+      const response = await axios.post(`${apiBaseUrl}register`, {
+        name,
+        email,
+        password,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Something went wrong!");
-        return;
-      }
 
       toast.success("Account created successfully!");
       setName("");
@@ -74,9 +68,11 @@ const CreateAccountPage = () => {
       setPassword("");
       setSubmitted(false);
       setErrors({});
-    } catch (err) {
-      console.error("Signup error:", err);
-      toast.error("Something went wrong. Please try again.");
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      const errorMessage =
+        error?.response?.data?.message || "Something went wrong. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FaCreditCard } from 'react-icons/fa';
 import { apiBaseUrl, apiBaseRoot } from "@/config";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 interface PaymentSummaryProps {
   subtotal: number;
@@ -34,83 +35,48 @@ const PaymentSummary = ({ subtotal }: PaymentSummaryProps) => {
 
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
-    try {
+   try {
+      let res;
       if (isLoggedIn && user_id) {
-        const res = await fetch(`${apiBaseUrl}apply-coupon`, {
-          method: "POST",
+        res = await axios.post(`${apiBaseUrl}apply-coupon`, {
+          user_id: user_id,
+          coupon: promoCodeInput
+        }, {
           headers: {
             "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            user_id: user_id,
-            coupon: promoCodeInput
-          }),
+          }
         });
-        
-        // Parse the JSON response
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to apply promo code.");
-        }
-        
-        if (res.status === 200) {
-          setTotal(Number(data.final_price));
-          setValidDiscount(data.discount);
-          toast.success(data.message || "Promo code applied successfully!");
-
-          localStorage.setItem('coupon_code', promoCodeInput);
-          localStorage.setItem('coupon_discount', (data.discount));
-          localStorage.setItem('final_after_coupon_code', data.final_price);
-
-        } else {
-          setTotal(subtotal);
-          setValidDiscount('0.00');
-          toast.error(data.message || "Failed to apply promo code.");
-
-          localStorage.setItem('coupon_code', '');
-          localStorage.setItem('coupon_discount', '0');
-          localStorage.setItem('final_after_coupon_code', (subtotal.toFixed(2)).toString());
-        }
       } else {
-        const res = await fetch(`${apiBaseUrl}apply-coupon`, {
-          method: "POST",
+        res = await axios.post(`${apiBaseUrl}apply-coupon`, {
+          cart: cart,
+          coupon: promoCodeInput
+        }, {
           headers: {
             "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            cart: cart,
-            coupon: promoCodeInput
-          }),
+          }
         });
-        
-        // Parse the JSON response
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to apply promo code.");
-        }
-        
-        if (res.status === 200) {
-          setTotal(Number(data.final_price));
-          setValidDiscount(data.discount);
-          toast.success(data.message || "Promo code applied successfully!");
-
-          localStorage.setItem('coupon_code', promoCodeInput);
-          localStorage.setItem('coupon_discount', (data.discount));
-          localStorage.setItem('final_after_coupon_code', data.final_price);
-        } else {
-          setTotal(subtotal);
-          setValidDiscount('0.00');
-          toast.error(data.message || "Failed to apply promo code.");
-
-          localStorage.setItem('coupon_code', '');
-          localStorage.setItem('coupon_discount', '0');
-          localStorage.setItem('final_after_coupon_code', subtotal.toString());
-        }
       }
-    } catch (err) {
 
+      const data = res.data;
+
+      if (res.status === 200) {
+        setTotal(Number(data.final_price));
+        setValidDiscount(data.discount);
+        toast.success(data.message || "Promo code applied successfully!");
+
+        localStorage.setItem('coupon_code', promoCodeInput);
+        localStorage.setItem('coupon_discount', (data.discount));
+        localStorage.setItem('final_after_coupon_code', data.final_price);
+      } else {
+        setTotal(subtotal);
+        setValidDiscount('0.00');
+        toast.error(data.message || "Failed to apply promo code.");
+
+        localStorage.setItem('coupon_code', '');
+        localStorage.setItem('coupon_discount', '0');
+        localStorage.setItem('final_after_coupon_code', (subtotal.toFixed(2)).toString());
+      }
+    } catch (err: any) {
       localStorage.setItem('coupon_code', '');
       localStorage.setItem('coupon_discount', '0');
       localStorage.setItem('final_after_coupon_code', subtotal.toString());
@@ -119,7 +85,6 @@ const PaymentSummary = ({ subtotal }: PaymentSummaryProps) => {
       toast.error("Something went wrong. Please try again later.");
     }
   };
-  
 
   const getButtonLabel = () => {
     if (isLoading) return 'Applying...';
@@ -139,23 +104,19 @@ const PaymentSummary = ({ subtotal }: PaymentSummaryProps) => {
 
     setPromoCodeInput(couponCode || '');
     setPromoDropdownOpen(!!couponCode);
-    
-    // Ensure 2 decimal places for discount and total
+
     setValidDiscount(couponDiscount ? couponDiscount : '0.00');
     setTotal(finalAfterCouponCode && Number(finalAfterCouponCode) > 0 ? Number(finalAfterCouponCode) : subtotal);
   }, [promoCodeInput]);
-
 
   const handlePromoCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPromoCodeInput(e.target.value);
     localStorage.setItem("coupon_code", e.target.value);
     localStorage.setItem('coupon_discount', '0');
     localStorage.setItem('final_after_coupon_code', subtotal.toString());
-    
-    // Reset promo details when the user changes the promo code input
+
     setPromoMessage("");
     setValidDiscount('0.00');
-
   };
 
   return (
