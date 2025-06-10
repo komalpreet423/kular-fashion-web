@@ -151,27 +151,32 @@ const AddressesPage = () => {
   };
 
   const validateAddress = (address: Address) => {
-    const errors: Record<string, string> = {};
-    if (!address.name.trim()) errors.name = "Please enter name.";
-    if (!address.country_code.trim())
-      errors.country_code = "Please select a country code.";
-    if (!address.phone_no.trim()) errors.phone_no = "Please enter phone no.";
-    if (!address.address_line_1.trim())
-      errors.address_line_1 = "Please enter address line 1.";
-    if (!address.address_line_2.trim())
-      errors.address_line_2 = "Please enter address line 2.";
-    if (!address.landmark.trim()) errors.landmark = "Please enter landmark.";
-    if (!address.city.trim()) errors.city = "Please enter city name.";
-    if (!address.state.trim()) errors.state = "Please enter state name.";
-    if (!address.zip_code.trim()) {
-      errors.zip_code = "Please enter zip-code.";
-    } else if (!/^[0-9]{5,6}$/.test(address.zip_code.trim())) {
-      errors.zip_code = "This zip-code is invalid.";
-    }
-    if (!address.country.trim()) errors.country = "Please enter country name.";
-    if (!address.type.trim()) errors.type = "Please enter address type.";
-    return errors;
-  };
+  const errors: Record<string, string> = {};
+
+  if (!(address.name?.trim())) errors.name = "Please enter name.";
+  if (!(address.country_code?.trim()))
+    errors.country_code = "Please select a country code.";
+  if (!(address.phone_no?.trim())) errors.phone_no = "Please enter phone no.";
+  if (!(address.address_line_1?.trim()))
+    errors.address_line_1 = "Please enter address line 1.";
+  if (!(address.address_line_2?.trim()))
+    errors.address_line_2 = "Please enter address line 2.";
+  if (!(address.landmark?.trim())) errors.landmark = "Please enter landmark.";
+  if (!(address.city?.trim())) errors.city = "Please enter city name.";
+  if (!(address.state?.trim())) errors.state = "Please enter state name.";
+
+  const zip = address.zip_code?.trim() || "";
+  if (!zip) {
+    errors.zip_code = "Please enter zip-code.";
+  } else if (!/^[0-9]{5,6}$/.test(zip)) {
+    errors.zip_code = "This zip-code is invalid.";
+  }
+
+  if (!(address.country?.trim())) errors.country = "Please enter country name.";
+  if (!(address.type?.trim())) errors.type = "Please enter address type.";
+
+  return errors;
+};
 
   const handleSaveAddress = async (address: Address) => {
     const errors = validateAddress(address);
