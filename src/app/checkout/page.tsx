@@ -1,9 +1,8 @@
 "use client";
 
-import DeliveryAddresses from "./delivery-addresses/page";
-import PaymentOptions from "./payment-options/page";
-import OrderSummary from "./order-summary/page";
-
+import DeliveryAddresses from "./components/DeliveryAddresses";
+import PaymentOptions from "./components/PaymentOptions";
+import OrderSummary from "./components/OrderSummary";
 const CheckoutPage = () => {
     return (
         <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-6">

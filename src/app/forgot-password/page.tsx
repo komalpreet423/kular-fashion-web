@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { apiBaseUrl } from "@/config";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -32,7 +33,7 @@ const ForgotPassword = () => {
     }
   }, [email, submitted]);
 
-  const handleReset = async (e: React.FormEvent) => {
+    const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
 
@@ -44,35 +45,23 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${apiBaseUrl}send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Something went wrong.");
-        return;
-      }
+      const { data } = await axios.post(`${apiBaseUrl}send-otp`, { email });
 
       toast.success(data.message || "OTP sent successfully!");
       setEmail("");
       setSubmitted(false);
-
       localStorage.setItem("otpEmail", email);
-      
+
       setTimeout(() => {
         router.push("/verify-otp");
       }, 1500);
-    } catch (err) {
-      toast.error("Network error. Please try again.");
+    } catch (err: any) {
+      const message = err?.response?.data?.message || "Network error. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-[70vh] flex items-center justify-center bg-gray-100">
       <ToastContainer position="top-center" />

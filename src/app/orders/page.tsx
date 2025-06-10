@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { apiBaseUrl } from "@/config";
+import axios from "axios";
 
 interface Order {
   id: number;
@@ -45,16 +46,14 @@ const OrdersPage: React.FC = () => {
     const fetchOrders = async () => {
       try {
         const token = localStorage.getItem("authToken");
-        const response = await fetch(`${apiBaseUrl}order/show`, {
+
+        const response = await axios.get(`${apiBaseUrl}order/show`, {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!response.ok) throw new Error("Failed to fetch orders");
-
-        const result = await response.json();
+        const result = response.data;
 
         const orders = result.data.map((order: any) => {
           const itemsCount = order.order_items.reduce(
@@ -139,10 +138,11 @@ const OrdersPage: React.FC = () => {
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium ${statusFilter === status
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  statusFilter === status
                     ? "bg-primary text-white"
                     : "bg-gray-200 text-gray-700 hover:bg-primary hover:text-white"
-                  } cursor-pointer transition-all`}
+                } cursor-pointer transition-all`}
               >
                 {status}
               </button>

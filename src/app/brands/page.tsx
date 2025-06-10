@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { apiBaseUrl } from '@/config';
-import BrandCard from '@/components/brand/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Pagination, PaginationContent, PaginationItem } from '@/components/ui/pagination';
+import { useEffect, useState } from "react";
+import { apiBaseUrl } from "@/config";
+import BrandCard from "@/components/brand/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import axios from "axios";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
 
 interface Brand {
   id: number;
@@ -24,15 +29,23 @@ export default function BrandsPage() {
     const fetchBrands = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${apiBaseUrl}brands?page=${currentPage}&per_page=${perPage}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const res = await axios.get(`${apiBaseUrl}brands`, {
+          params: {
+            page: currentPage,
+            per_page: perPage,
+          },
+        });
 
-        const data = await res.json();
+        const data = res.data;
         setBrands(data.data || []);
         setTotalPages(data.pagination?.last_page || 1);
         setError(null);
       } catch (error) {
-        setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+        setError(
+          axios.isAxiosError(error)
+            ? error.response?.data?.message || "Request failed"
+            : "An unexpected error occurred"
+        );
       } finally {
         setLoading(false);
       }
@@ -40,9 +53,7 @@ export default function BrandsPage() {
 
     fetchBrands();
   }, [currentPage, perPage]);
-
-
-return (
+  return (
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-4">All Brands</h1>
       {loading ? (
@@ -60,7 +71,7 @@ return (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {brands.map((brand) => (
-              <BrandCard key={brand.id} brand={brand}/>
+              <BrandCard key={brand.id} brand={brand} />
             ))}
           </div>
           {totalPages > 1 && (
@@ -69,8 +80,13 @@ return (
                 {Array.from({ length: totalPages }, (_, i) => (
                   <PaginationItem key={i}>
                     <button
-                      className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-primary text-white' : 'bg-gray-200'}`}
-                      onClick={() => setCurrentPage(i + 1)}>
+                      className={`px-3 py-1 rounded ${
+                        currentPage === i + 1
+                          ? "bg-primary text-white"
+                          : "bg-gray-200"
+                      }`}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
                       {i + 1}
                     </button>
                   </PaginationItem>

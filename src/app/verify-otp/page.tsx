@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { apiBaseUrl } from "@/config";
+import axios from "axios";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState("");
@@ -19,13 +20,12 @@ const VerifyOtp = () => {
       router.replace("/");
     }
   }, []);
-
   useEffect(() => {
     const storedEmail = localStorage.getItem("otpEmail");
-    if (storedEmail){
-        setEmail(storedEmail);
-    }else{
-        router.replace("/");
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      router.replace("/");
     }
   }, []);
 
@@ -34,7 +34,6 @@ const VerifyOtp = () => {
     if (!/^\d{6}$/.test(value)) return "OTP must be 6 digits.";
     return "";
   };
-
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
@@ -45,36 +44,33 @@ const VerifyOtp = () => {
 
     setLoading(true);
     try {
-      const res = await fetch(`${apiBaseUrl}verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
+      const res = await axios.post(`${apiBaseUrl}verify-otp`, {
+        email,
+        otp,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
+      const data = res.data;
+      if (res.status < 200 || res.status >= 300) {
         toast.error(data.message || "OTP verification failed.");
         return;
       }
-
       toast.success("OTP verified successfully!");
-
       setTimeout(() => {
         router.push("/reset-password");
       }, 1500);
-    } catch {
-      toast.error("Network error. Please try again.");
+    } catch (err: any) {
+      const data = err.response?.data;
+      toast.error(data?.message || "OTP verification failed.");
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-[70vh] flex items-center justify-center bg-gray-100">
       <ToastContainer position="top-center" />
       <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl p-10">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Verify OTP</h1>
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+          Verify OTP
+        </h1>
 
         <form onSubmit={handleVerify} className="space-y-6">
           <input

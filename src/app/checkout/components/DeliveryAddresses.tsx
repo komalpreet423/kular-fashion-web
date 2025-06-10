@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { toast } from "react-toastify";
 import { apiBaseUrl } from "@/config";
+import axios from "axios";
 
 interface Address {
   id: number;
@@ -61,8 +62,7 @@ const DeliveryAddresses = () => {
 
   const fetchCountries = async () => {
     try {
-      const res = await fetch(`${apiBaseUrl}countries`);
-      const data = await res.json();
+      const { data } = await axios.get(`${apiBaseUrl}countries`);
       setCountries(data);
     } catch {
       toast.error("Failed to fetch countries.");
@@ -71,8 +71,7 @@ const DeliveryAddresses = () => {
 
   const fetchStates = async (countryId: number) => {
     try {
-      const res = await fetch(`${apiBaseUrl}states/${countryId}`);
-      const data = await res.json();
+      const { data } = await axios.get(`${apiBaseUrl}states/${countryId}`);
       setStates(data);
     } catch {
       toast.error("Failed to fetch states.");
@@ -81,17 +80,17 @@ const DeliveryAddresses = () => {
 
   const fetchAddresses = async (token: string) => {
     try {
-      const res = await fetch(`${apiBaseUrl}customer-addresses`, {
+      const { data } = await axios.get(`${apiBaseUrl}customer-addresses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to fetch addresses");
-      const data = await res.json();
+
       setAddresses(data.data || []);
 
       const storedId = localStorage.getItem("selectedAddressId");
       const defaultAddress = (data.data || []).find(
         (a: Address) => a.is_default
       );
+
       setSelectedAddress(
         storedId ? parseInt(storedId) : defaultAddress?.id || null
       );
@@ -166,33 +165,31 @@ const DeliveryAddresses = () => {
     };
 
     try {
-      const response = await fetch(`${apiBaseUrl}customer-addresses/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        if (result.errors) {
-          const errorMessages = Object.values(result.errors).flat().join(", ");
-          toast.error(`Validation error: ${errorMessages}`);
-        } else {
-          throw new Error(result.message || "Something went wrong.");
+      const { data } = await axios.post(
+        `${apiBaseUrl}customer-addresses/add`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
-        return;
-      }
+      );
 
       toast.success("Address added successfully.");
       setFormData({});
       setFormErrors({});
       setShowAddressForm(false);
       fetchAddresses(token);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to submit address.");
+    } catch (error: any) {
+      const errData = error.response?.data;
+
+      if (errData?.errors) {
+        const errorMessages = Object.values(errData.errors).flat().join(", ");
+        toast.error(`Validation error: ${errorMessages}`);
+      } else {
+        toast.error(errData?.message || "Failed to submit address.");
+      }
     }
   };
 
