@@ -141,7 +141,7 @@ const OrderDetailsPage: React.FC = () => {
   }, [orderId]);
 
   if (!orderDetails) {
-    return <p className="px-4 py-8">Loading order details...</p>;
+    return <p className="px-4 py-8">No Orders Found </p>;
   }
 
   const itemCount = orderDetails.items.reduce(
