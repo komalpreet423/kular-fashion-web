@@ -31,6 +31,7 @@ interface OrderDetails {
     subtotal: number;
     tax: number;
     shipping: number;
+    discount: number;
     total: number;
   };
   trackingDates: Record<string, string>;
@@ -102,12 +103,13 @@ const OrderDetailsPage: React.FC = () => {
               productName: item.product.name,
               quantity: item.quantity,
               price: parseFloat(item.price),
-              imageUrl: item.product.image || "/images/temp/default.jpg",
+              imageUrl: item.product.image || "/images/default-product.png",
             })),
             billing: {
               subtotal: parseFloat(order.subtotal),
               tax: parseFloat(order.tax),
               shipping: parseFloat(order.shipping_charge),
+              discount: parseFloat(order.discount),
               total: parseFloat(order.total),
             },
             trackingDates: {
@@ -181,20 +183,20 @@ const OrderDetailsPage: React.FC = () => {
         </div>
 
         {/* Product List */}
-        <div className="border-t pt-4">
+        <div className="border-t pt-2">
           <h3 className="text-lg font-semibold mb-3">Products ({itemCount})</h3>
-          <div className="space-y-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 text-center">
             {orderDetails.items.map((item, idx) => (
               <div
                 key={idx}
-                className="flex gap-4 border rounded-lg p-3 shadow-sm hover:shadow transition"
+                className="border rounded-lg p-3 shadow-sm hover:shadow transition"
               >
                 <img
                   src={item.imageUrl}
                   alt={item.productName}
-                  className="w-20 h-20 object-cover rounded"
+                  className="w-20 h-20 object-cover rounded mx-auto"
                 />
-                <div className="flex-1">
+                <div className="mt-2">
                   <p className="font-medium">{item.productName}</p>
                   <p className="text-sm text-gray-500">
                     Quantity: {item.quantity}
@@ -257,6 +259,12 @@ const OrderDetailsPage: React.FC = () => {
               <span>Shipping</span>
               <span>₹ {orderDetails.billing.shipping.toFixed(2)}</span>
             </div>
+            {orderDetails.billing.discount > 0 && (
+              <div className="flex justify-between text-green-500">
+                <span>Discount</span>
+                <span>₹ - {orderDetails.billing.discount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-semibold border-t pt-2">
               <span>Total</span>
               <span>₹ {orderDetails.billing.total.toFixed(2)}</span>
