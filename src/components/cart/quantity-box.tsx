@@ -1,44 +1,48 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+'use client';
+
+import { useState, useEffect } from 'react';
 
 interface QuantityBoxProps {
-    value: number;
-    onChange: (newQuantity: number) => void;
-    max?: number;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (newValue: number) => void;
 }
 
-export default function QuantityBox({ value, onChange, max = Infinity }: QuantityBoxProps) {
-    return (
-        <div className="flex items-center border rounded-md h-8">
-            {/* Decrease Button */}
-            <Button
-                variant="primary"
-                size="sm"
-                className="px-2 h-full rounded-none border-r"
-                onClick={() => onChange(Math.max(1, value - 1))}
-                disabled={value === 1}
-            >
-                -
-            </Button>
+const QuantityBox = ({ value, min = 1, max, onChange }: QuantityBoxProps) => {
+  const [localValue, setLocalValue] = useState(value);
 
-            {/* Input Field */}
-            <Input
-                type="number"
-                value={value}
-                onChange={(e) => onChange(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-10 text-center border-none outline-none h-full text-sm [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
 
-            {/* Increase Button */}
-            <Button
-                variant="primary"
-                size="sm"
-                className="px-2 h-full rounded-none border-l"
-                onClick={() => onChange(value + 1)}
-                disabled={value >= max}
-            >
-                +
-            </Button>
-        </div>
-    );
-}
+  const handleChange = (delta: number) => {
+    const newValue = localValue + delta;
+    if (newValue >= min && newValue <= max) {
+      setLocalValue(newValue);
+      onChange(newValue);
+    }
+  };
+
+  return (
+    <div className="flex items-center border rounded-md overflow-hidden">
+      <button
+        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+        onClick={() => handleChange(-1)}
+        disabled={localValue <= min}
+      >
+        -
+      </button>
+      <span className="px-4 py-1 text-center min-w-[40px]">{localValue}</span>
+      <button
+        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+        onClick={() => handleChange(1)}
+        disabled={localValue >= max}
+      >
+        +
+      </button>
+    </div>
+  );
+};
+
+export default QuantityBox;
