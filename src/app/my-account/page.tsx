@@ -47,7 +47,7 @@ const MyAccountPage = () => {
   ];
 
   return (
-    <div className="bg-gray-100 px-2 md:px-4 py-10">
+    <div className="bg-gray-100 px-2 md:px-4 py-8">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left - User Info */}
         <div className="w-full md:w-1/3 bg-white rounded-2xl p-6 flex items-center space-x-4 shadow-md">
@@ -103,7 +103,7 @@ const MyAccountPage = () => {
       )}
 
       {activeLink === "Addresses" && (
-        <div className="mt-6 px-8">
+        <div className="mt-6 px-1">
           <AddressesPage />
         </div>
       )}
