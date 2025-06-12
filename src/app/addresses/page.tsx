@@ -151,32 +151,32 @@ const AddressesPage = () => {
   };
 
   const validateAddress = (address: Address) => {
-  const errors: Record<string, string> = {};
+    const errors: Record<string, string> = {};
 
-  if (!(address.name?.trim())) errors.name = "Please enter name.";
-  if (!(address.country_code?.trim()))
-    errors.country_code = "Please select a country code.";
-  if (!(address.phone_no?.trim())) errors.phone_no = "Please enter phone no.";
-  if (!(address.address_line_1?.trim()))
-    errors.address_line_1 = "Please enter address line 1.";
-  if (!(address.address_line_2?.trim()))
-    errors.address_line_2 = "Please enter address line 2.";
-  if (!(address.landmark?.trim())) errors.landmark = "Please enter landmark.";
-  if (!(address.city?.trim())) errors.city = "Please enter city name.";
-  if (!(address.state?.trim())) errors.state = "Please enter state name.";
+    if (!address.name?.trim()) errors.name = "Please enter name.";
+    if (!address.country_code?.trim())
+      errors.country_code = "Please select a country code.";
+    if (!address.phone_no?.trim()) errors.phone_no = "Please enter phone no.";
+    if (!address.address_line_1?.trim())
+      errors.address_line_1 = "Please enter address line 1.";
+    if (!address.address_line_2?.trim())
+      errors.address_line_2 = "Please enter address line 2.";
+    if (!address.landmark?.trim()) errors.landmark = "Please enter landmark.";
+    if (!address.city?.trim()) errors.city = "Please enter city name.";
+    if (!address.state?.trim()) errors.state = "Please enter state name.";
 
-  const zip = address.zip_code?.trim() || "";
-  if (!zip) {
-    errors.zip_code = "Please enter zip-code.";
-  } else if (!/^[0-9]{5,6}$/.test(zip)) {
-    errors.zip_code = "This zip-code is invalid.";
-  }
+    const zip = address.zip_code?.trim() || "";
+    if (!zip) {
+      errors.zip_code = "Please enter zip-code.";
+    } else if (!/^[0-9]{5,6}$/.test(zip)) {
+      errors.zip_code = "This zip-code is invalid.";
+    }
 
-  if (!(address.country?.trim())) errors.country = "Please enter country name.";
-  if (!(address.type?.trim())) errors.type = "Please enter address type.";
+    if (!address.country?.trim()) errors.country = "Please enter country name.";
+    if (!address.type?.trim()) errors.type = "Please enter address type.";
 
-  return errors;
-};
+    return errors;
+  };
 
   const handleSaveAddress = async (address: Address) => {
     const errors = validateAddress(address);
@@ -313,16 +313,16 @@ const AddressesPage = () => {
   }, [editingAddress]);
 
   return (
-    <div className="min-h-[70vh] px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">My Addresses</h1>
-
-      <button
-        onClick={handleAddAddress}
-        className="px-4 py-2 bg-primary text-white rounded-lg mb-6 transition-all duration-300 hover:bg-white hover:border-primary hover:text-primary hover:cursor-pointer border-2"
-      >
-        Add New Address
-      </button>
-
+    <div className="min-h-[70vh] px-0 py-0">
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold">My Addresses</h1>
+        <button
+          onClick={handleAddAddress}
+          className="px-4 py-2 bg-primary text-white rounded-lg border-2 border-primary transition-all duration-300 hover:bg-white hover:text-primary"
+        >
+          Add New Address
+        </button>
+      </div>
       {addresses.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -385,7 +385,7 @@ const AddressesPage = () => {
               &times;
             </button>
 
-            <h2 className="text-xl font-semibold mb-4">
+            <h2 className="text-xl font-semibold mb-2">
               {editingAddress ? "Edit Address" : "Add New Address"}
             </h2>
 
