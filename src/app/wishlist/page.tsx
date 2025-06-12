@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { apiBaseUrl } from '@/config';
 import { ProductBase } from '@/types/product';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const ProductCardSkeleton = () => (
   <div className="flex flex-col space-y-3">
@@ -27,56 +28,49 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchWishlist = async () => {
-    setLoading(true);
-    try {
-      // localStorage.removeItem('wishlist');
-      const user_details_str = localStorage.getItem("userDetails");
-      const user_details = user_details_str ? JSON.parse(user_details_str) : null;
-      const user_id = user_details ? user_details.id : null;
+  setLoading(true);
+  try {
+    const user_details_str = localStorage.getItem("userDetails");
+    const user_details = user_details_str ? JSON.parse(user_details_str) : null;
+    const user_id = user_details ? user_details.id : null;
 
-      if (user_id) {
-        const res = await fetch(`${apiBaseUrl}wishlist/show?user_id=${user_id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+    if (user_id) {
+      const res = await axios.get(`${apiBaseUrl}wishlist/show`, {
+        params: { user_id },
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-        if (!res.ok) throw new Error("Failed to fetch wishlist items");
+      const json = res.data;
+      const localWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+      const serverWishlist = json.wishlist || [];
 
-        const json = await res.json();
-        const localWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        const serverWishlist = json.wishlist || [];
+      const wishlistWithFlag = serverWishlist.map((product: ProductBase) => ({
+        ...product,
+        is_favourite: true,
+      }));
 
-        // Mark all server products as favorite
-        const wishlistWithFlag = serverWishlist.map((product: ProductBase) => ({
-          ...product,
-          is_favourite: true,
-        }));
+      localWishlist.forEach((localItem: ProductBase) => {
+        const existsInServer = serverWishlist.some((serverItem: ProductBase) => serverItem.id === localItem.id);
+        if (!existsInServer) {
+          wishlistWithFlag.push({ ...localItem, is_favourite: true });
+        }
+      });
 
-        // Add missing local items that aren't in the server list
-        localWishlist.forEach((localItem: ProductBase) => {
-          const existsInServer = serverWishlist.some((serverItem: ProductBase) => serverItem.id === localItem.id);
-          if (!existsInServer) {
-            wishlistWithFlag.push({ ...localItem, is_favourite: true });
-          }
-        });
-
-        // Update localStorage and set wishlist state
-        localStorage.setItem('wishlist', JSON.stringify(wishlistWithFlag));
-        setWishlist(wishlistWithFlag);
-        localStorage.setItem("wishlist", JSON.stringify(wishlistWithFlag));
-      } else {
-        const wishlistData = JSON.parse(localStorage.getItem("wishlist") || '[]');
-        setWishlist(wishlistData);
-      }
-    } catch (err: any) {
-      console.error("Error fetching wishlist:", err);
-      setError(err.message || "Unknown error");
-    } finally {
-      setLoading(false);
+      localStorage.setItem('wishlist', JSON.stringify(wishlistWithFlag));
+      setWishlist(wishlistWithFlag);
+    } else {
+      const wishlistData = JSON.parse(localStorage.getItem("wishlist") || '[]');
+      setWishlist(wishlistData);
     }
-  };
+  } catch (err: any) {
+    console.error("Error fetching wishlist:", err);
+    setError(err.message || "Unknown error");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchWishlist();

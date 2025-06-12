@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { apiBaseUrl } from "@/config";
+import axios from 'axios';
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("");
@@ -61,47 +62,36 @@ const ResetPassword = () => {
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
+  e.preventDefault();
+  setSubmitted(true);
 
-    const newPasswordError = validatePassword(newPassword);
-    const confirmPasswordError = validateConfirmPassword(newPassword, confirmPassword);
+  const newPasswordError = validatePassword(newPassword);
+  const confirmPasswordError = validateConfirmPassword(newPassword, confirmPassword);
 
-    setErrors({ newPassword: newPasswordError, confirmPassword: confirmPasswordError });
+  setErrors({ newPassword: newPasswordError, confirmPassword: confirmPasswordError });
 
-    if (newPasswordError || confirmPasswordError) return;
+  if (newPasswordError || confirmPasswordError) return;
 
-    setLoading(true);
-    try {
-      const res = await fetch(`${apiBaseUrl}reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          new_password: newPassword,
-          confirm_password: confirmPassword,
-        }),
-      });
+  setLoading(true);
+  try {
+    const response = await axios.post(`${apiBaseUrl}reset-password`, {
+      email,
+      new_password: newPassword,
+      confirm_password: confirmPassword,
+    });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Something went wrong.");
-        return;
-      }
-
-      toast.success("Password reset successfully!");
-      localStorage.removeItem("otpEmail");
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-    } catch (err) {
-      toast.error("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    toast.success("Password reset successfully!");
+    localStorage.removeItem("otpEmail");
+    setTimeout(() => {
+      router.push("/login");
+    }, 2000);
+  } catch (error: any) {
+    const message = error.response?.data?.message || "Something went wrong.";
+    toast.error(message);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="min-h-[70vh] flex items-center justify-center bg-gray-100">
       <ToastContainer position="top-center" />

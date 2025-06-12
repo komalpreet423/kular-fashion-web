@@ -13,7 +13,8 @@ import { GrLock } from "react-icons/gr";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { FaCreditCard } from "react-icons/fa";
-import WishlistEmpty from '@/components/cart/cart-empty';
+import WishlistEmpty from "@/components/cart/cart-empty";
+import axios from 'axios';
 
 const MiniCart: React.FC = () => {
   const router = useRouter();
@@ -36,16 +37,15 @@ const MiniCart: React.FC = () => {
     setOpen(false);
     router.push("/checkout");
   };
+
   const handleUpdateQuantity = async (id: number, newQuantity: number, variant_id: number) => {
     try {
-      // Find the current item to validate stock
       const currentItem = cartItems.find(item => item.id === id);
       if (!currentItem) {
         toast.error("Item not found in cart");
         return;
       }
 
-      // Validate against available stock
       if (newQuantity > currentItem.total_quantity) {
         toast.error(`Only ${currentItem.total_quantity} items available`);
         return;
@@ -54,9 +54,9 @@ const MiniCart: React.FC = () => {
       await updateQuantity(id, newQuantity, variant_id);
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      // Error message already shown by updateQuantity
     }
   };
+
   const handlePromoCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPromoCodeInput(e.target.value);
   };
@@ -79,7 +79,9 @@ const MiniCart: React.FC = () => {
       <SheetContent side="right" className="w-[90vw] max-w-sm flex flex-col">
         <SheetHeader className="border-b">
           <SheetTitle>Shopping Cart</SheetTitle>
-          <SheetDescription>Review and manage items in your cart.</SheetDescription>
+          <SheetDescription>
+            Review and manage items in your cart.
+          </SheetDescription>
         </SheetHeader>
 
         <motion.div className="px-4 py-2 flex-1 overflow-y-auto">
@@ -88,32 +90,51 @@ const MiniCart: React.FC = () => {
               <WishlistEmpty />
             ) : (
               cartItems.map((item) => (
-                <motion.li key={item.id} className="flex items-center gap-4 border-b pb-1">
-                  <motion.img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" whileHover={{ scale: 1.1, rotate: 2 }} />
+                <motion.li
+                  key={item.id}
+                  className="flex items-center gap-4 border-b pb-1"
+                >
+                  <motion.img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-16 h-16 object-cover rounded"
+                    whileHover={{ scale: 1.1, rotate: 2 }}
+                  />
                   <div className="flex-1">
                     <div className="flex justify-between">
-                      <Link href={`/brands/${item.brand}`} className="block text-sm font-semibold">
+                      <Link
+                        href={`/brands/${item.brand}`}
+                        className="block text-sm font-semibold"
+                      >
                         {item.brand}
                       </Link>
-                      <motion.button whileHover={{ scale: 1.2 }} className="cursor-pointer text-gray-400 hover:text-gray-700" onClick={() => removeFromCart(item.id)}>
+                      <motion.button 
+                        whileHover={{ scale: 1.2 }} 
+                        className="cursor-pointer text-gray-400 hover:text-gray-700" 
+                        onClick={() => removeFromCart(item.id)}
+                      >
                         <AiOutlineDelete size={18} />
                       </motion.button>
                     </div>
                     <Link href={`/products/${item.id}`} passHref>
                       <div className="text-gray-700 hover:text-gray-900">
                         <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-gray-500">Color: {item.color}</div>
-                        <div className="text-sm text-gray-500">Size: {item.size}</div>
+                        <div className="text-sm text-gray-500">
+                          Color: {item.color}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Size: {item.size}
+                        </div>
                       </div>
                     </Link>
 
                     <div className="flex justify-between my-1">
-                        <QuantityBox
-                          value={item.quantity}
-                          min={1}
-                          max={item.total_quantity}
-                          onChange={(newQty) => handleUpdateQuantity(item.id, newQty, item.variant_id)}
-                        />
+                      <QuantityBox
+                        value={item.quantity}
+                        min={1}
+                        max={item.total_quantity}
+                        onChange={(newQty) => handleUpdateQuantity(item.id, newQty, item.variant_id)}
+                      />
                       <span className="block text-gray-900">${item.price}</span>
                     </div>
                   </div>
@@ -125,7 +146,10 @@ const MiniCart: React.FC = () => {
 
         <div className="border-t p-4 bg-white sticky bottom-0 w-full">
           {/* Promo Code Section */}
-          <div className="flex items-center justify-between text-sm font-medium text-primary cursor-pointer mb-3 mt-2" onClick={() => setPromoDropdownOpen(!promoDropdownOpen)}>
+          <div 
+            className="flex items-center justify-between text-sm font-medium text-primary cursor-pointer mb-3 mt-2" 
+            onClick={() => setPromoDropdownOpen(!promoDropdownOpen)}
+          >
             <div className="flex items-center space-x-2">
               <FaCreditCard className="text-primary" />
               <span>Add Promo Code / Gift Card</span>
@@ -143,7 +167,10 @@ const MiniCart: React.FC = () => {
                   className="w-full border p-2 text-sm rounded"
                   placeholder="Enter promo code"
                 />
-                <Button onClick={handleApplyPromoCode} className="py-2 px-4 text-white bg-primary hover:bg-primary-dark">
+                <Button 
+                  onClick={handleApplyPromoCode} 
+                  className="py-2 px-4 text-white bg-primary hover:bg-primary-dark"
+                >
                   Apply
                 </Button>
               </div>
@@ -154,19 +181,26 @@ const MiniCart: React.FC = () => {
             <span className="text-lg">Subtotal:</span>
             <span className="text-gray-900">£{subTotal.toFixed(2)}</span>
           </div>
+          
           {Number(discount) > 0 && (
             <div className="flex justify-between">
               <span className="text-lg">Discount:</span>
               <span className="text-gray-900">£{discount}</span>
             </div>
           )}
+          
           <div className="flex justify-between">
             <span className="text-lg">Total:</span>
             <span className="text-gray-900">£{total}</span>
           </div>
 
           <motion.div whileHover={{ scale: 1.05 }}>
-            <Button className="mt-4 w-full rounded-none uppercase" onClick={handleCheckout}><GrLock size={16} /> Checkout Securely</Button>
+            <Button 
+              className="mt-4 w-full rounded-none uppercase" 
+              onClick={handleCheckout}
+            >
+              <GrLock size={16} /> Checkout Securely
+            </Button>
           </motion.div>
         </div>
       </SheetContent>

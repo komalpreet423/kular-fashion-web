@@ -16,7 +16,10 @@ import "react-toastify/dist/ReactToastify.css";
 import SearchModal from "@/components/SearchModal/search";
 import { apiBaseUrl } from '@/config';
 
-
+interface UserDetails {
+  name: string;
+  email: string;
+}
 const Header: React.FC = () => {
   const [departments, setDepartments] = useState([]);
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false);
@@ -25,6 +28,20 @@ const Header: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+
+useEffect(() => {
+    const storedUser = localStorage.getItem("userDetails");
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUserDetails(parsed);
+        setIsLoggedIn(true);
+      } catch (err) {
+        console.error("Invalid userDetails JSON");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`${apiBaseUrl}menus`)
@@ -113,6 +130,7 @@ const Header: React.FC = () => {
                 Orders
               </a>
             )}
+             <a href="/gift-voucher">Gift Voucher</a>
             <div className="relative user-dropdown">
               {isLoggedIn ? (
                 <button
@@ -120,6 +138,7 @@ const Header: React.FC = () => {
                   className="flex items-center cursor-pointer text-white hover:text-white"
                 >
                   <FiUser size={20} className="text-white" />
+                   <span className="ml-1 text-sm">{userDetails?.name ?? "User"}</span>
                 </button>
               ) : (
                 <a

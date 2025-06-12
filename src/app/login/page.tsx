@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiBaseUrl } from "@/config";
 import { toast, ToastContainer } from "react-toastify";
+import axios from "axios";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -43,7 +44,7 @@ const LoginPage = () => {
     return newErrors;
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
 
@@ -55,31 +56,26 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${apiBaseUrl}login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const { data } = await axios.post(`${apiBaseUrl}login`, {
+        email,
+        password,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Login failed.");
-        return;
-      }
 
       localStorage.setItem("authToken", data.data.token);
       localStorage.setItem("userDetails", JSON.stringify(data.data));
+
       toast.success("Login successful!");
       setEmail("");
       setPassword("");
       setSubmitted(false);
       setErrors({});
+
       setTimeout(() => {
         window.location.href = "/";
       }, 2000);
-    } catch (err) {
-      toast.error("Network error. Please try again later.");
+    } catch (err: any) {
+      const message = err?.response?.data?.message || "Login failed.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

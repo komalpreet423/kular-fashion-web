@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { apiBaseRoot, apiBaseUrl } from '@/config';
 import { ProductBase } from '@/types/product';
 import { toast } from "react-toastify";
+import axios from 'axios';
 
 const ProductCard: React.FC<ProductBase> = ({
     id,
@@ -40,22 +41,24 @@ const ProductCard: React.FC<ProductBase> = ({
 
         if (user_id) {
             try {
-                const response = await fetch(`${apiBaseUrl}wishlist/add`, {
-                    method: 'POST',
+                const response = await axios.post(`${apiBaseUrl}wishlist/add`, {
+                    product_id: id,
+                    user_id: user_id
+                }, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ product_id: id, user_id : user_id }),
                 });
-      
-                const data = await response.json();
+
+                const data = response.data;
       
                 
-                if (response.ok) {
+                if (response.status === 200) {
                     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
 
+
                     // Check if the product is already in localStorage
-                    const productIndex = wishlist.findIndex((item: any) => item.id === id);
+                      const productIndex = wishlist.findIndex((item: any) => item.id === id);
 
                     if (productIndex > -1) {
                         // If the product is in the wishlist, remove it

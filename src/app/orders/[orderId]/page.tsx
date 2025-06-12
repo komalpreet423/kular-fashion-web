@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { apiBaseUrl } from "@/config";
+import axios from "axios";
 
 interface Product {
   productName: string;
@@ -17,12 +18,12 @@ interface OrderDetails {
   id: string;
   orderDate: string;
   orderStatus:
-  | "placed"
-  | "packed"
-  | "shipped"
-  | "out-for-delivery"
-  | "delivered"
-  | "cancelled";
+    | "placed"
+    | "packed"
+    | "shipped"
+    | "out-for-delivery"
+    | "delivered"
+    | "cancelled";
   deliveredOn?: string;
   expectedDelivery?: string;
   items: Product[];
@@ -30,6 +31,7 @@ interface OrderDetails {
     subtotal: number;
     tax: number;
     shipping: number;
+    discount: number;
     total: number;
   };
   trackingDates: Record<string, string>;
@@ -73,13 +75,16 @@ const OrderDetailsPage: React.FC = () => {
             return;
           }
 
-          const response = await fetch(`${apiBaseUrl}order/show/${orderId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const response = await axios.get(
+            `${apiBaseUrl}order/show/${orderId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-          const result = await response.json();
+          const result = response.data;
 
           if (!result.success || !result.data || result.data.length === 0) {
             toast.error("Order not found");
@@ -93,24 +98,25 @@ const OrderDetailsPage: React.FC = () => {
             orderDate: order.placed_at?.split(" ")[0] || "",
             orderStatus: order.status,
             deliveredOn: order.delivered_at?.split(" ")[0] || "",
-            expectedDelivery: "", // Fill if available in API
+            expectedDelivery: "",
             items: order.order_items.map((item: any) => ({
               productName: item.product.name,
               quantity: item.quantity,
               price: parseFloat(item.price),
-              imageUrl: item.product.image || "/images/temp/default.jpg",
+              imageUrl: item.product.image || "/images/default-product.png",
             })),
             billing: {
               subtotal: parseFloat(order.subtotal),
               tax: parseFloat(order.tax),
               shipping: parseFloat(order.shipping_charge),
+              discount: parseFloat(order.discount),
               total: parseFloat(order.total),
             },
             trackingDates: {
               placed: order.placed_at?.split(" ")[0] || "",
-              packed: "", // If available
+              packed: "",
               shipped: order.shipped_at?.split(" ")[0] || "",
-              "out-for-delivery": "", // If available
+              "out-for-delivery": "",
               delivered: order.delivered_at?.split(" ")[0] || "",
             },
             paymentMode: order.payment_type || "N/A",
@@ -137,7 +143,7 @@ const OrderDetailsPage: React.FC = () => {
   }, [orderId]);
 
   if (!orderDetails) {
-    return <p className="px-4 py-8">Loading order details...</p>;
+    return <p className="px-4 py-8">No Orders Found </p>;
   }
 
   const itemCount = orderDetails.items.reduce(
@@ -155,7 +161,9 @@ const OrderDetailsPage: React.FC = () => {
         {/* Top Info */}
         <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h2 className="text-lg font-semibold">Order ID: {orderDetails.id}</h2>
+            <h2 className="text-lg font-semibold">
+              Order ID: {orderDetails.id}
+            </h2>
             <p className="text-gray-500">Placed on: {orderDetails.orderDate}</p>
             <p className="text-gray-500">
               {orderDetails.orderStatus === "delivered"
@@ -164,32 +172,35 @@ const OrderDetailsPage: React.FC = () => {
             </p>
           </div>
           <div
-            className={`px-3 py-1 rounded-full font-semibold text-sm ${orderDetails.orderStatus === "cancelled"
-              ? "bg-red-100 text-red-600"
-              : "bg-blue-100 text-blue-600"
-              }`}
+            className={`px-3 py-1 rounded-full font-semibold text-sm ${
+              orderDetails.orderStatus === "cancelled"
+                ? "bg-red-100 text-red-600"
+                : "bg-blue-100 text-blue-600"
+            }`}
           >
             {orderDetails.orderStatus.replace(/-/g, " ").toUpperCase()}
           </div>
         </div>
 
         {/* Product List */}
-        <div className="border-t pt-4">
+        <div className="border-t pt-2">
           <h3 className="text-lg font-semibold mb-3">Products ({itemCount})</h3>
-          <div className="space-y-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 text-center">
             {orderDetails.items.map((item, idx) => (
               <div
                 key={idx}
-                className="flex gap-4 border rounded-lg p-3 shadow-sm hover:shadow transition"
+                className="border rounded-lg p-3 shadow-sm hover:shadow transition"
               >
                 <img
                   src={item.imageUrl}
                   alt={item.productName}
-                  className="w-20 h-20 object-cover rounded"
+                  className="w-20 h-20 object-cover rounded mx-auto"
                 />
-                <div className="flex-1">
+                <div className="mt-2">
                   <p className="font-medium">{item.productName}</p>
-                  <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                  <p className="text-sm text-gray-500">
+                    Quantity: {item.quantity}
+                  </p>
                   <p className="text-sm font-semibold">
                     ₹ {(item.quantity * item.price).toFixed(2)}
                   </p>
@@ -212,15 +223,23 @@ const OrderDetailsPage: React.FC = () => {
         <div className="border-t pt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <h4 className="font-semibold text-gray-800 mb-1">Packed From</h4>
-            <p className="text-sm text-gray-600">{orderDetails.addresses.packedFrom}</p>
+            <p className="text-sm text-gray-600">
+              {orderDetails.addresses.packedFrom}
+            </p>
           </div>
           <div>
             <h4 className="font-semibold text-gray-800 mb-1">Shipped From</h4>
-            <p className="text-sm text-gray-600">{orderDetails.addresses.shippedFrom}</p>
+            <p className="text-sm text-gray-600">
+              {orderDetails.addresses.shippedFrom}
+            </p>
           </div>
           <div>
-            <h4 className="font-semibold text-gray-800 mb-1">Delivery Address</h4>
-            <p className="text-sm text-gray-600">{orderDetails.addresses.deliveryAddress}</p>
+            <h4 className="font-semibold text-gray-800 mb-1">
+              Delivery Address
+            </h4>
+            <p className="text-sm text-gray-600">
+              {orderDetails.addresses.deliveryAddress}
+            </p>
           </div>
         </div>
 
@@ -240,6 +259,12 @@ const OrderDetailsPage: React.FC = () => {
               <span>Shipping</span>
               <span>₹ {orderDetails.billing.shipping.toFixed(2)}</span>
             </div>
+            {orderDetails.billing.discount > 0 && (
+              <div className="flex justify-between text-green-500">
+                <span>Discount</span>
+                <span>₹ - {orderDetails.billing.discount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-semibold border-t pt-2">
               <span>Total</span>
               <span>₹ {orderDetails.billing.total.toFixed(2)}</span>
@@ -253,25 +278,30 @@ const OrderDetailsPage: React.FC = () => {
           <h3 className="text-lg font-semibold mb-4">Order Tracking</h3>
           <div className="relative flex justify-between w-full px-4">
             {statusSteps.map((step, idx) => {
-              const isCompleted = idx <= currentStepIndex;
+              const isCompleted = idx === 0;
               const isLast = idx === statusSteps.length - 1;
 
               return (
-                <div key={step} className="relative flex flex-col items-center flex-1">
+                <div
+                  key={step}
+                  className="relative flex flex-col items-center flex-1"
+                >
                   {/* Connector Line to the next step */}
                   {!isLast && (
                     <div
-                      className={`absolute top-2.5 left-1/2 h-0.5 w-full ${idx < currentStepIndex ? "bg-green-500" : "bg-gray-300"
-                        }`}
+                      className={`absolute top-2.5 left-1/2 h-0.5 w-full ${
+                        idx < currentStepIndex ? "bg-green-500" : "bg-gray-300"
+                      }`}
                     />
                   )}
 
                   {/* Step Dot */}
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${isCompleted
-                      ? "bg-green-500 border-green-500 text-white"
-                      : "bg-white border-gray-300 text-gray-300"
-                      }`}
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${
+                      isCompleted
+                        ? "bg-green-500 border-green-500 text-white"
+                        : "bg-white border-gray-300 text-gray-300"
+                    }`}
                   >
                     {isCompleted ? (
                       <svg
@@ -281,7 +311,11 @@ const OrderDetailsPage: React.FC = () => {
                         strokeWidth={2}
                         viewBox="0 0 24 24"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     ) : (
                       <div className="w-2 h-2 bg-gray-300 rounded-full" />
@@ -291,8 +325,9 @@ const OrderDetailsPage: React.FC = () => {
                   {/* Text Info */}
                   <div className="mt-2 text-center">
                     <p
-                      className={`font-medium ${isCompleted ? "text-green-700" : "text-gray-500"
-                        }`}
+                      className={`font-medium ${
+                        isCompleted ? "text-green-700" : "text-gray-500"
+                      }`}
                     >
                       {step.replace(/-/g, " ").toUpperCase()}
                     </p>
