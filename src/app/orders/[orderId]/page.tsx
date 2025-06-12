@@ -183,32 +183,45 @@ const OrderDetailsPage: React.FC = () => {
         </div>
 
         {/* Product List */}
+        {/* Product List */}
         <div className="border-t pt-2">
-          <h3 className="text-lg font-semibold mb-3">Products ({itemCount})</h3>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 text-center">
-            {orderDetails.items.map((item, idx) => (
-              <div
-                key={idx}
-                className="border rounded-lg p-3 shadow-sm hover:shadow transition"
-              >
-                <img
-                  src={item.imageUrl}
-                  alt={item.productName}
-                  className="w-20 h-20 object-cover rounded mx-auto"
-                />
-                <div className="mt-2">
-                  <p className="font-medium">{item.productName}</p>
-                  <p className="text-sm text-gray-500">
-                    Quantity: {item.quantity}
-                  </p>
-                  <p className="text-sm font-semibold">
-                    ₹ {(item.quantity * item.price).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+  <h3 className="text-lg font-semibold mb-3">Products ({itemCount})</h3>
+
+  <div
+    className={`gap-3 ${
+      orderDetails.items.length <= 2
+        ? 'flex justify-start'
+        : 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'
+    }`}
+  >
+    {orderDetails.items.map((item, idx) => (
+      <div
+        key={idx}
+        className={`border rounded-lg p-2 shadow-sm hover:shadow transition text-center ${
+          orderDetails.items.length <= 2 ? 'w-[300px]' : ''
+        }`}
+      >
+        <img
+          src={item.imageUrl}
+          alt={item.productName}
+          className="w-20 h-20 object-cover rounded mx-auto"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/images/default-product.png";
+          }}
+        />
+        <div className="mt-2">
+          <p className="font-medium">{item.productName}</p>
+          <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+          <p className="text-sm font-semibold">
+            ₹ {(item.quantity * item.price).toFixed(2)}
+          </p>
         </div>
+      </div>
+    ))}
+  </div>
+</div>
+
 
         {/* Payment Info */}
         <div className="border-t pt-4">
