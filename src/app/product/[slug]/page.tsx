@@ -1,6 +1,7 @@
 // src/app/product/[slug]/page.tsx
 'use client';
 
+import ProductPrice from "@/components/product/ProductPrice";
 import React from 'react';
 import { useEffect, useState, Suspense } from 'react';
 import { useCart } from '@/context/cart-context';
@@ -30,7 +31,7 @@ function ProductPageContent({ slug }: { slug: string }) {
     const fetchProduct = async () => {
       try {
         const res = await fetch(`${apiBaseUrl}products/${slug}`);
-        
+
         // Check for HTML response
         const contentType = res.headers.get('content-type');
         if (contentType?.includes('text/html')) {
@@ -70,8 +71,8 @@ function ProductPageContent({ slug }: { slug: string }) {
     }
 
     const variant = product.variants.find(
-      v => v.product_color_id === selectedColor.id && 
-           v.product_size_id === selectedSize.id
+      v => v.product_color_id === selectedColor.id &&
+        v.product_size_id === selectedSize.id
     );
 
     if (!variant) {
@@ -98,9 +99,9 @@ function ProductPageContent({ slug }: { slug: string }) {
 
   if (loading) return <LoadingProduct />;
   if (error) return <div>{error}</div>;
-  if (!product) return <NoProductsFound 
-    message='Product not found!' 
-    description={`Sorry, the product you're looking for is not available`} 
+  if (!product) return <NoProductsFound
+    message='Product not found!'
+    description={`Sorry, the product you're looking for is not available`}
   />;
 
   const prices = product.sizes?.map(size => size.price) || [];
@@ -115,34 +116,34 @@ function ProductPageContent({ slug }: { slug: string }) {
       <div className="container mx-auto py-8 px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <div className="flex justify-center">
-            <ProductImages 
-              images={product.images} 
-              selectedColorId={selectedColor?.id} 
-              defaultImage={product.default_image} 
+            <ProductImages
+              images={product.images}
+              selectedColorId={selectedColor?.id}
+              defaultImage={product.default_image}
             />
           </div>
 
           <div className="flex flex-col">
             <ProductHeader productName={product.name} />
-            
+
             {selectedSize && selectedColor && (
               <div className='text-gray-700'>
                 {product.variants.find(
                   v => v.product_color_id === selectedColor.id &&
-                       v.product_size_id === selectedSize.id
+                    v.product_size_id === selectedSize.id
                 )?.sku}
               </div>
             )}
 
             <div className='px-0'>
               <h4 className="text-2xl font-semibold">{product.name}</h4>
-              
+
               {product.webInfo?.summary && (
                 <div className="mb-0" dangerouslySetInnerHTML={{ __html: product.webInfo.summary }} />
               )}
 
               <div className="text-xl font-semibold mt-2">
-                {!selectedSize ? priceText : formatCurrency(selectedSize.price)}
+                <ProductPrice basePrice={selectedSize ? selectedSize.price : product.price} />
               </div>
 
               <ProductVariants
@@ -152,15 +153,15 @@ function ProductPageContent({ slug }: { slug: string }) {
                 onSelectionChange={handleSelectionChange}
               />
 
-              <ProductActions 
-                isDisabled={!selectedColor || !selectedSize} 
-                onAddToCart={handleAddToCart} 
-                productId={product.id} 
+              <ProductActions
+                isDisabled={!selectedColor || !selectedSize}
+                onAddToCart={handleAddToCart}
+                productId={product.id}
               />
-              
-              <ProductSummary 
-                description={product.webInfo?.description} 
-                specifications={product.specifications} 
+
+              <ProductSummary
+                description={product.webInfo?.description}
+                specifications={product.specifications}
               />
             </div>
           </div>
@@ -177,7 +178,7 @@ function ProductPageContent({ slug }: { slug: string }) {
 // Main page component that handles the Promise params
 export default function ProductDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = React.use(params);
-  
+
   return (
     <Suspense fallback={<LoadingProduct />}>
       <ProductPageContent slug={slug} />

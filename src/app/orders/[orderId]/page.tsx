@@ -1,5 +1,6 @@
 "use client";
 
+import ProductPrice from "@/components/product/ProductPrice";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -18,12 +19,12 @@ interface OrderDetails {
   id: string;
   orderDate: string;
   orderStatus:
-    | "placed"
-    | "packed"
-    | "shipped"
-    | "out-for-delivery"
-    | "delivered"
-    | "cancelled";
+  | "placed"
+  | "packed"
+  | "shipped"
+  | "out-for-delivery"
+  | "delivered"
+  | "cancelled";
   deliveredOn?: string;
   expectedDelivery?: string;
   items: Product[];
@@ -172,11 +173,10 @@ const OrderDetailsPage: React.FC = () => {
             </p>
           </div>
           <div
-            className={`px-3 py-1 rounded-full font-semibold text-sm ${
-              orderDetails.orderStatus === "cancelled"
-                ? "bg-red-100 text-red-600"
-                : "bg-blue-100 text-blue-600"
-            }`}
+            className={`px-3 py-1 rounded-full font-semibold text-sm ${orderDetails.orderStatus === "cancelled"
+              ? "bg-red-100 text-red-600"
+              : "bg-blue-100 text-blue-600"
+              }`}
           >
             {orderDetails.orderStatus.replace(/-/g, " ").toUpperCase()}
           </div>
@@ -185,42 +185,40 @@ const OrderDetailsPage: React.FC = () => {
         {/* Product List */}
         {/* Product List */}
         <div className="border-t pt-2">
-  <h3 className="text-lg font-semibold mb-3">Products ({itemCount})</h3>
+          <h3 className="text-lg font-semibold mb-3">Products ({itemCount})</h3>
 
-  <div
-    className={`gap-3 ${
-      orderDetails.items.length <= 2
-        ? 'flex justify-start'
-        : 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'
-    }`}
-  >
-    {orderDetails.items.map((item, idx) => (
-      <div
-        key={idx}
-        className={`border rounded-lg p-2 shadow-sm hover:shadow transition text-center ${
-          orderDetails.items.length <= 2 ? 'w-[300px]' : ''
-        }`}
-      >
-        <img
-          src={item.imageUrl}
-          alt={item.productName}
-          className="w-20 h-20 object-cover rounded mx-auto"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/images/default-product.png";
-          }}
-        />
-        <div className="mt-2">
-          <p className="font-medium">{item.productName}</p>
-          <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
-          <p className="text-sm font-semibold">
-            ₹ {(item.quantity * item.price).toFixed(2)}
-          </p>
+          <div
+            className={`gap-3 ${orderDetails.items.length <= 2
+              ? 'flex justify-start'
+              : 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'
+              }`}
+          >
+            {orderDetails.items.map((item, idx) => (
+              <div
+                key={idx}
+                className={`border rounded-lg p-2 shadow-sm hover:shadow transition text-center ${orderDetails.items.length <= 2 ? 'w-[300px]' : ''
+                  }`}
+              >
+                <img
+                  src={item.imageUrl}
+                  alt={item.productName}
+                  className="w-20 h-20 object-cover rounded mx-auto"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/images/default-product.png";
+                  }}
+                />
+                <div className="mt-2">
+                  <p className="font-medium">{item.productName}</p>
+                  <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                  <p className="text-sm font-semibold">
+                    <ProductPrice basePrice={item.quantity * item.price} />
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    ))}
-  </div>
-</div>
 
 
         {/* Payment Info */}
@@ -262,29 +260,28 @@ const OrderDetailsPage: React.FC = () => {
           <div className="text-gray-700 space-y-1">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>₹ {orderDetails.billing.subtotal.toFixed(2)}</span>
+              <ProductPrice basePrice={orderDetails.billing.subtotal} />
             </div>
             <div className="flex justify-between">
               <span>Tax</span>
-              <span>₹ {orderDetails.billing.tax.toFixed(2)}</span>
+              <ProductPrice basePrice={orderDetails.billing.tax} />
             </div>
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span>₹ {orderDetails.billing.shipping.toFixed(2)}</span>
+              <ProductPrice basePrice={orderDetails.billing.shipping} />
             </div>
             {orderDetails.billing.discount > 0 && (
               <div className="flex justify-between text-green-500">
                 <span>Discount</span>
-                <span>₹ - {orderDetails.billing.discount.toFixed(2)}</span>
+                <ProductPrice basePrice={-orderDetails.billing.discount} />
               </div>
             )}
             <div className="flex justify-between font-semibold border-t pt-2">
               <span>Total</span>
-              <span>₹ {orderDetails.billing.total.toFixed(2)}</span>
+              <ProductPrice basePrice={orderDetails.billing.total} />
             </div>
           </div>
         </div>
-
         {/* Order Tracking Tree */}
         {/* Order Tracking Tree - Enhanced */}
         <div className="border-t pt-6">
@@ -302,19 +299,17 @@ const OrderDetailsPage: React.FC = () => {
                   {/* Connector Line to the next step */}
                   {!isLast && (
                     <div
-                      className={`absolute top-2.5 left-1/2 h-0.5 w-full ${
-                        idx < currentStepIndex ? "bg-green-500" : "bg-gray-300"
-                      }`}
+                      className={`absolute top-2.5 left-1/2 h-0.5 w-full ${idx < currentStepIndex ? "bg-green-500" : "bg-gray-300"
+                        }`}
                     />
                   )}
 
                   {/* Step Dot */}
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${
-                      isCompleted
-                        ? "bg-green-500 border-green-500 text-white"
-                        : "bg-white border-gray-300 text-gray-300"
-                    }`}
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${isCompleted
+                      ? "bg-green-500 border-green-500 text-white"
+                      : "bg-white border-gray-300 text-gray-300"
+                      }`}
                   >
                     {isCompleted ? (
                       <svg
@@ -338,9 +333,8 @@ const OrderDetailsPage: React.FC = () => {
                   {/* Text Info */}
                   <div className="mt-2 text-center">
                     <p
-                      className={`font-medium ${
-                        isCompleted ? "text-green-700" : "text-gray-500"
-                      }`}
+                      className={`font-medium ${isCompleted ? "text-green-700" : "text-gray-500"
+                        }`}
                     >
                       {step.replace(/-/g, " ").toUpperCase()}
                     </p>

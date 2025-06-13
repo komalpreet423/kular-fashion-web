@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Roboto_Mono } from "next/font/google"; // Using standard Google Fonts
+import { Inter, Roboto_Mono } from "next/font/google";
 import "@/css/global.css";
 import Header from "@/components/global/header";
 import Footer from "@/components/global/footer";
 import { CartProvider } from "@/context/cart-context";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 
 // Initialize fonts
 const inter = Inter({
@@ -31,11 +32,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
       <body className="min-h-screen bg-white font-sans antialiased">
-        <CartProvider>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-        </CartProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+          </CartProvider>
+        </CurrencyProvider>
       </body>
     </html>
   );
