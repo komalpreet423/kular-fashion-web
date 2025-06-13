@@ -1,5 +1,6 @@
 "use client";
 
+import ProductPrice from "@/components/product/ProductPrice";
 import Image from "next/image";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { motion } from "framer-motion";
@@ -165,7 +166,7 @@ const ProductCard: React.FC<ProductBase> = ({
           </Link>
 
           <Link href={`/product/${slug}`}>
-            <p className="text-gray-900 text-sm cursor-pointer">£{price}</p>
+            <ProductPrice basePrice={price} />
           </Link>
         </CardContent>
       </Card>

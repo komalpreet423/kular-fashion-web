@@ -1,5 +1,5 @@
 'use client';
-
+import ProductPrice from "@/components/product/ProductPrice";
 import { useState, useEffect } from 'react';
 import { FaCreditCard } from 'react-icons/fa';
 import { apiBaseUrl, apiBaseRoot } from "@/config";
@@ -29,13 +29,13 @@ const PaymentSummary = ({ subtotal }: PaymentSummaryProps) => {
     const userDetailsStr = localStorage.getItem("userDetails");
     const userDetails = userDetailsStr ? JSON.parse(userDetailsStr) : null;
     const user_id = userDetails ? userDetails.id : null;
-  
+
     const token = localStorage.getItem("authToken");
     const isLoggedIn = !!token;
 
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
-   try {
+    try {
       let res;
       if (isLoggedIn && user_id) {
         res = await axios.post(`${apiBaseUrl}apply-coupon`, {
@@ -147,11 +147,10 @@ const PaymentSummary = ({ subtotal }: PaymentSummaryProps) => {
               <button
                 onClick={handleApplyPromo}
                 disabled={!promoCodeInput.trim() || isLoading}
-                className={`px-4 py-2 rounded text-sm font-medium transition ${
-                  !promoCodeInput.trim()
+                className={`px-4 py-2 rounded text-sm font-medium transition ${!promoCodeInput.trim()
                     ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                     : 'bg-primary text-white hover:cursor-pointer'
-                }`}
+                  }`}
               >
                 {getButtonLabel()}
               </button>
@@ -167,17 +166,19 @@ const PaymentSummary = ({ subtotal }: PaymentSummaryProps) => {
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span>Subtotal:</span>
-          <span>€{subtotal.toFixed(2)}</span>
+          <span><ProductPrice basePrice={subtotal} /></span>
         </div>
+
         {Number(validDiscount) > 0 && (
           <div className="flex justify-between text-green-600">
             <span>Discount:</span>
-            <span>-€{validDiscount}</span>
+            <span>-<ProductPrice basePrice={Number(validDiscount)} /></span>
           </div>
         )}
+
         <div className="flex justify-between font-semibold text-base">
           <span>Total:</span>
-          <span>€{total.toFixed(2)}</span>
+          <span><ProductPrice basePrice={total} /></span>
         </div>
       </div>
     </div>

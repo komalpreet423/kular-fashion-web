@@ -1,5 +1,7 @@
 // src/components/cart/mini-cart.tsx
 "use client";
+
+import ProductPrice from "@/components/product/ProductPrice";
 import { useState } from 'react';
 import { useCart } from '@/context/cart-context';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -21,7 +23,7 @@ const MiniCart: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [promoDropdownOpen, setPromoDropdownOpen] = useState(false);
-  
+
   const {
     cartItems,
     cartCount,
@@ -108,9 +110,9 @@ const MiniCart: React.FC = () => {
                       >
                         {item.brand}
                       </Link>
-                      <motion.button 
-                        whileHover={{ scale: 1.2 }} 
-                        className="cursor-pointer text-gray-400 hover:text-gray-700" 
+                      <motion.button
+                        whileHover={{ scale: 1.2 }}
+                        className="cursor-pointer text-gray-400 hover:text-gray-700"
                         onClick={() => removeFromCart(item.id)}
                       >
                         <AiOutlineDelete size={18} />
@@ -135,7 +137,9 @@ const MiniCart: React.FC = () => {
                         max={item.total_quantity}
                         onChange={(newQty) => handleUpdateQuantity(item.id, newQty, item.variant_id)}
                       />
-                      <span className="block text-gray-900">${item.price}</span>
+                      <span className="block text-gray-900">
+                        <ProductPrice basePrice={item.price} />
+                      </span>
                     </div>
                   </div>
                 </motion.li>
@@ -146,8 +150,8 @@ const MiniCart: React.FC = () => {
 
         <div className="border-t p-4 bg-white sticky bottom-0 w-full">
           {/* Promo Code Section */}
-          <div 
-            className="flex items-center justify-between text-sm font-medium text-primary cursor-pointer mb-3 mt-2" 
+          <div
+            className="flex items-center justify-between text-sm font-medium text-primary cursor-pointer mb-3 mt-2"
             onClick={() => setPromoDropdownOpen(!promoDropdownOpen)}
           >
             <div className="flex items-center space-x-2">
@@ -167,8 +171,8 @@ const MiniCart: React.FC = () => {
                   className="w-full border p-2 text-sm rounded"
                   placeholder="Enter promo code"
                 />
-                <Button 
-                  onClick={handleApplyPromoCode} 
+                <Button
+                  onClick={handleApplyPromoCode}
                   className="py-2 px-4 text-white bg-primary hover:bg-primary-dark"
                 >
                   Apply
@@ -176,27 +180,33 @@ const MiniCart: React.FC = () => {
               </div>
             </div>
           )}
-          
+
           <div className="flex justify-between">
             <span className="text-lg">Subtotal:</span>
-            <span className="text-gray-900">£{subTotal.toFixed(2)}</span>
+            <span className="text-gray-900">
+              <ProductPrice basePrice={subTotal} />
+            </span>
           </div>
-          
+
           {Number(discount) > 0 && (
             <div className="flex justify-between">
               <span className="text-lg">Discount:</span>
-              <span className="text-gray-900">£{discount}</span>
+              <span className="text-gray-900">
+                <ProductPrice basePrice={Number(discount)} />
+              </span>
             </div>
           )}
-          
+
           <div className="flex justify-between">
             <span className="text-lg">Total:</span>
-            <span className="text-gray-900">£{total}</span>
+            <span className="text-gray-900">
+              <ProductPrice basePrice={Number(total)} />
+            </span>
           </div>
 
           <motion.div whileHover={{ scale: 1.05 }}>
-            <Button 
-              className="mt-4 w-full rounded-none uppercase" 
+            <Button
+              className="mt-4 w-full rounded-none uppercase"
               onClick={handleCheckout}
             >
               <GrLock size={16} /> Checkout Securely

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrency } from "@/context/CurrencyContext";
 import Link from "next/link";
 import { CiMenuBurger, CiSearch } from "react-icons/ci";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,21 @@ interface UserDetails {
   name: string;
   email: string;
 }
+const CurrencySelector = () => {
+  const { currency, setCurrency } = useCurrency();
+
+  return (
+    <select
+      value={currency}
+      onChange={(e) => setCurrency(e.target.value as "USD" | "EUR" | "GBP")}
+      className="bg-black text-sm text-white border-none focus:outline-none cursor-pointer">
+      <option value="USD">USD</option>
+      <option value="EUR">EURO</option>
+      <option value="GBP">POUND</option>
+    </select>
+  );
+};
+
 const Header: React.FC = () => {
   const [departments, setDepartments] = useState([]);
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false);
@@ -30,7 +46,7 @@ const Header: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
-useEffect(() => {
+  useEffect(() => {
     const storedUser = localStorage.getItem("userDetails");
     if (storedUser) {
       try {
@@ -99,9 +115,9 @@ useEffect(() => {
       <div className="header-top text-white py-2 uppercase">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           {/* Currency */}
-          <div className="flex items-center">
-            <span>USD</span>
-            <FaChevronDown className="ml-1 currency-icon" />
+          <div className="flex items-center space-x-1">
+            <CurrencySelector />
+            {/* <FaChevronDown className="text-white" /> */}
           </div>
 
           {/* Left side: Hamburger Menu (for mobile) */}
@@ -138,7 +154,7 @@ useEffect(() => {
                   className="flex items-center cursor-pointer text-white hover:text-white"
                 >
                   <FiUser size={20} className="text-white" />
-                   <span className="ml-1 text-sm">{userDetails?.name ?? "User"}</span>
+                  <span className="ml-1 text-sm">{userDetails?.name ?? "User"}</span>
                 </button>
               ) : (
                 <a
