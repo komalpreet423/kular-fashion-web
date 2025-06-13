@@ -188,18 +188,16 @@ const OrderDetailsPage: React.FC = () => {
           <h3 className="text-lg font-semibold mb-3">Products ({itemCount})</h3>
 
           <div
-            className={`gap-3 ${
-              orderDetails.items.length <= 2
+            className={`gap-3 ${orderDetails.items.length <= 2
                 ? "flex justify-start"
                 : "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))]"
-            }`}
+              }`}
           >
             {orderDetails.items.map((item, idx) => (
               <div
                 key={idx}
-                className={`border rounded-lg p-2 shadow-sm hover:shadow transition text-center ${
-                  orderDetails.items.length <= 2 ? "w-[300px]" : ""
-                }`}
+                className={`border rounded-lg p-2 shadow-sm hover:shadow transition text-center ${orderDetails.items.length <= 2 ? "w-[300px]" : ""
+                  }`}
               >
                 <img
                   src={item.imageUrl}
@@ -216,7 +214,7 @@ const OrderDetailsPage: React.FC = () => {
                     Quantity: {item.quantity}
                   </p>
                   <p className="text-sm font-semibold">
-                    ₹ {(item.quantity * item.price).toFixed(2)}
+                    <ProductPrice basePrice={item.quantity * item.price} />
                   </p>
                 </div>
               </div>
