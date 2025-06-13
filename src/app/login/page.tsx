@@ -82,14 +82,14 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center bg-gray-100">
+    <div className="min-[70vh] flex items-center justify-center bg-gray-100">
       <ToastContainer position="top-center" />
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl p-6 my-6">
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">Login</h1>
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl p-7 my-8">
+        <h1 className="text-4xl font-bold text-center text-gray-800 mb-4">Login</h1>
 
         <form onSubmit={handleLogin} className="space-y-2">
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-md font-medium text-gray-700 mb-0.5">Email</label>
             <input
               type="email"
               value={email}
@@ -100,7 +100,7 @@ const LoginPage = () => {
                   setErrors(errs);
                 }
               }}
-              className="w-full px-5 py-3 border border-gray-300 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              className="w-full px-5 py-3 border border-gray-300 rounded-md  shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               placeholder="Enter your email"
             />
             {submitted && errors.email && (
@@ -109,7 +109,7 @@ const LoginPage = () => {
           </div>
 
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Password</label>
+            <label className="block text-md font-medium text-gray-700 mb-0.5">Password</label>
             <input
               type="password"
               value={password}
@@ -120,14 +120,14 @@ const LoginPage = () => {
                   setErrors(errs);
                 }
               }}
-              className="w-full px-5 py-3 border border-gray-300 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              className="w-full px-5 py-3 border border-gray-300 rounded-md shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               placeholder="Enter your password"
             />
             {submitted && errors.password && (
               <p className="text-sm text-red-600 mt-1">{errors.password}</p>
             )}
 
-            <div className="text-right mt-2">
+            <div className="text-right mt-1">
               <a
                 href="/forgot-password"
                 className="text-sm text-[var(--primary)] hover:underline font-medium"
@@ -140,7 +140,7 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 font-semibold text-lg cursor-pointer border border-transparent transition-all duration-300 ease-in-out ${
+            className={`w-full py-3 font-semibold text-lg rounded-xl cursor-pointer border border-transparent transition-all duration-300 ease-in-out ${
               loading
                 ? "bg-gray-400 text-white cursor-not-allowed"
                 : "bg-[var(--primary)] text-white hover:bg-white hover:text-[var(--primary)] hover:border-[var(--primary)]"
@@ -150,11 +150,11 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-base text-gray-600">
+        <p className="mt-3 text-center text-base text-gray-600">
           Don’t have an account?{" "}
           <a
             href="/create-account"
-            className="text-[var(--primary)] hover:underline font-medium"
+            className="text-[var(--primary)] hover:underline rounded-md font-medium"
           >
             Create Account
           </a>
