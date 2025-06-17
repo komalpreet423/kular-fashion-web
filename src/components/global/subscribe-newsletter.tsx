@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { apiBaseUrl } from "@/config";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +9,21 @@ import { motion } from "framer-motion";
 export default function SubscribeNewsletter() {
   const [email, setEmail] = useState<string>("");
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [newsletterBg, setNewsletterBg] = useState<string | null>(null);
+
+  useEffect(() => {
+    axios
+      .get(`${apiBaseUrl}home-images`)
+      .then((res) => {
+        const images = res.data?.newsletter_images;
+        if (res.data.success && images.length > 0) {
+          setNewsletterBg(images[0].image_url);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch newsletter image", err);
+      });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,12 +34,20 @@ export default function SubscribeNewsletter() {
 
   return (
     <motion.div
-      className="w-full flex items-center justify-center p-6 bg-gradient-to-r from-gray-100 to-gray-300"
+      className="w-full flex items-center justify-center p-6 bg-cover bg-center relative min-h-[40vh]"
+      style={{
+        backgroundImage: newsletterBg ? `url(${newsletterBg})` : undefined,
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {newsletterBg && (
+        <div className="absolute inset-0 bg-black/30 z-0 rounded-xl"></div>
+      )}
+
       <motion.div
+        className="relative z-10"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -54,10 +79,7 @@ export default function SubscribeNewsletter() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <motion.div
-                  whileFocus={{ scale: 1.02 }}
-                  className="flex-1"
-                >
+                <motion.div whileFocus={{ scale: 1.02 }} className="flex-1">
                   <Input
                     type="email"
                     placeholder="Enter your email"
