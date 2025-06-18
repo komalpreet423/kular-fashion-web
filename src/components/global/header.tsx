@@ -214,10 +214,12 @@ const Header: React.FC = () => {
           <nav className="hidden md:flex space-x-4 w-full justify-center items-center relative">
             <Link href="/">Home</Link>
             <Link href="/products">Latest</Link>
+
+
             {departments.map((dept) => (
               <div key={dept.id} className="group relative">
                 <div>
-                  <Link href={`/departments/${dept.slug}`} className="relative px-1 py-1 hover:text-gray-700">
+                  <Link href={`/${dept.slug}`} className="relative px-1 py-1 hover:text-gray-700">
                     {dept.name}
                   </Link>
                   {dept.product_types?.length > 0 && (
@@ -225,7 +227,7 @@ const Header: React.FC = () => {
                       {dept.product_types.map((type) => (
                         <Link
                           key={type.id}
-                          href={`/departments/${dept.slug}/${type.slug}`}
+                          href={`/${dept.slug}/${type.slug}`}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           {type.name}
