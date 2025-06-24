@@ -14,6 +14,7 @@ interface Filter {
     sizes: { id: string; name: string }[];
     colors: { id: string; color_code: string }[];
     price: { min: number; max: number };
+    brands: { id: string; name: string }[];
 }
 
 interface SelectedFilters {
@@ -21,6 +22,7 @@ interface SelectedFilters {
     sizes: string[];
     colors: string[];
     price: { min: number; max: number };
+    brands: string[];
 }
 
 interface FilterSidebarProps {
@@ -36,6 +38,7 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
         sizes: true,
         colors: true,
         price: true,
+        brands: true,
     });
 
     const toggleFilter = (filter: keyof typeof filterOpen) => {
@@ -54,6 +57,8 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                 return filters.sizes.length > 0;
             case 'colors':
                 return filters.colors.length > 0;
+            case 'brands':
+                return filters.brands.length > 0;
             case 'price':
                 return filters.price.min !== filters.price.max;
             default:
@@ -76,7 +81,7 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                             <SheetDescription>Apply your filter preferences</SheetDescription>
                         </SheetHeader>
                         <div className="px-3">
-                            {['product_types', 'sizes', 'colors', 'price'].map((filter) => (
+                            {['product_types', 'sizes', 'colors', 'brands', 'price'].map((filter) => (
                                 shouldShowFilterSection(filter as keyof typeof filters) && (
                                     <div key={filter} className="mb-4">
                                         <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
@@ -114,7 +119,7 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                                                     ))}
                                                 </motion.div>
                                             )}
-                                            {filter === 'colors' && filterOpen.colors && (
+                                            {filter === '   ' && filterOpen.colors && (
                                                 <motion.div
                                                     initial={{ opacity: 0, height: 0 }}
                                                     animate={{ opacity: 1, height: 'auto' }}
@@ -126,6 +131,29 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                                                             <button key={`color-m-${color.id}`} className={`w-6 h-6 rounded-full border ${selectedFilters.colors.includes(color.id) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color.color_code }} onClick={() => onFilterChange('colors', toggleSelection(selectedFilters.colors, color.id))} />
                                                         ))}
                                                     </div>
+                                                </motion.div>
+                                            )}
+                                            {filter === 'brands' && filterOpen.brands && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    exit={{ opacity: 0, height: 0 }}
+                                                    transition={{ duration: 0.3 }}
+                                                >
+                                                    {filters.brands.map((brand) => (
+                                                        <div key={`brand-m-${brand.id}`} className="flex items-center space-x-2 mt-2">
+                                                            <Checkbox
+                                                                id={`brand-m-${brand.id}`}
+                                                                checked={selectedFilters.brands.includes(brand.id)}
+                                                                onCheckedChange={() =>
+                                                                    onFilterChange('brands', toggleSelection(selectedFilters.brands, brand.id))
+                                                                }
+                                                            />
+                                                            <label htmlFor={`brand-m-${brand.id}`} className="text-sm cursor-pointer">
+                                                                {brand.name}
+                                                            </label>
+                                                        </div>
+                                                    ))}
                                                 </motion.div>
                                             )}
                                             {filter === 'price' && filterOpen.price && (
@@ -153,11 +181,11 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                 </Sheet>
             </div>
             <div className="hidden md:block rounded-lg shadow-lg bg-white p-4">
-                {['product_types', 'sizes', 'colors', 'price'].map((filter) => (
+                {['product_types', 'sizes', 'colors', 'brands', 'price'].map((filter) => (
                     shouldShowFilterSection(filter as keyof typeof filters) && (
                         <div key={filter} className="mb-4">
                             <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleFilter(filter as keyof typeof filterOpen)}>
-                                <h3 className="text-md font-medium capitalize">{filter === 'product_types' ? `Product Types` : filter}</h3>
+                                <h3 className="text-md font-medium capitalize">{filter === 'product_types' ? 'Product Types' : filter}</h3>
                                 <span>{filterOpen[filter as keyof typeof filterOpen] ? <SlArrowUp /> : <SlArrowDown />}</span>
                             </div>
                             <AnimatePresence>
@@ -203,6 +231,29 @@ export default function FilterSidebar({ filters, selectedFilters, onFilterChange
                                                 <button key={`color-d-${color.id}`} className={`w-6 h-6 rounded-full border ${selectedFilters.colors.includes(color.id) ? 'ring-2 ring-black' : ''}`} style={{ backgroundColor: color.color_code }} onClick={() => onFilterChange('colors', toggleSelection(selectedFilters.colors, color.id))} />
                                             ))}
                                         </div>
+                                    </motion.div>
+                                )}
+                                {filter === 'brands' && filterOpen.brands && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        {filters.brands.map((brand) => (
+                                            <div key={`brand-d-${brand.id}`} className="flex items-center space-x-2 mt-2">
+                                                <Checkbox
+                                                    id={`brand-d-${brand.id}`}
+                                                    checked={selectedFilters.brands.includes(brand.id)}
+                                                    onCheckedChange={() =>
+                                                        onFilterChange('brands', toggleSelection(selectedFilters.brands, brand.id))
+                                                    }
+                                                />
+                                                <label htmlFor={`brand-d-${brand.id}`} className="text-sm cursor-pointer">
+                                                    {brand.name}
+                                                </label>
+                                            </div>
+                                        ))}
                                     </motion.div>
                                 )}
                                 {filter === 'price' && filterOpen.price && (
