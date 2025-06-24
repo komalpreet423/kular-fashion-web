@@ -115,7 +115,6 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
         toast.warning("Please select both delivery address and payment method");
         return;
     }
-
     setIsPlacingOrder(true);
     
     try {
