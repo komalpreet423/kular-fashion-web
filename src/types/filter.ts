@@ -2,6 +2,7 @@ export interface Filter {
     product_types: { id: string; name: string }[];
     sizes: { id: string; name: string }[];
     colors: { id: string; color_code: string }[];
+    brands: { id: string; name: string }[];
     price: { min: number; max: number };
 }
 

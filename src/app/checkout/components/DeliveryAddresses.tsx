@@ -21,6 +21,7 @@ interface Address {
   is_default: boolean;
   type: string;
 }
+
 interface Country {
   id: number;
   name: string;
@@ -30,6 +31,7 @@ interface StateData {
   id: number;
   name: string;
 }
+
 const DeliveryAddresses = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -41,14 +43,15 @@ const DeliveryAddresses = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>([]);
   const [states, setStates] = useState<StateData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     setIsLoggedIn(!!token);
-    if (token) fetchAddresses(token);
-    else setShowAddressForm(true);
     fetchCountries();
+    loadAddresses();
   }, []);
+
   useEffect(() => {
     if (formData.country) {
       const selectedCountry = countries.find(
@@ -59,6 +62,21 @@ const DeliveryAddresses = () => {
       }
     }
   }, [formData.country]);
+
+  const loadAddresses = async () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      await fetchAddresses(token);
+    } else {
+      // For guest users, try to fetch by phone number if available
+      const guestPhone = localStorage.getItem("guestPhone");
+      if (guestPhone) {
+        await fetchAddressesByPhone(guestPhone);
+      } else {
+        setShowAddressForm(true);
+      }
+    }
+  };
 
   const fetchCountries = async () => {
     try {
@@ -80,28 +98,51 @@ const DeliveryAddresses = () => {
 
   const fetchAddresses = async (token: string) => {
     try {
+      setIsLoading(true);
       const { data } = await axios.get(`${apiBaseUrl}customer-addresses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       setAddresses(data.data || []);
-
-      const storedId = localStorage.getItem("selectedAddressId");
-      const defaultAddress = (data.data || []).find(
-        (a: Address) => a.is_default
-      );
-
-      setSelectedAddress(
-        storedId ? parseInt(storedId) : defaultAddress?.id || null
-      );
+      updateSelectedAddress(data.data || []);
     } catch {
       toast.error("Failed to fetch addresses.");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const fetchAddressesByPhone = async (phone: string) => {
+    try {
+      setIsLoading(true);
+      const { data } = await axios.get(`${apiBaseUrl}customer-addresses`, {
+        params: { phone_no: phone }
+      });
+
+      setAddresses(data.data || []);
+      updateSelectedAddress(data.data || []);
+      
+      if (data.data?.length === 0) {
+        setShowAddressForm(true);
+      }
+    } catch {
+      toast.error("Failed to fetch addresses by phone.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateSelectedAddress = (addressList: Address[]) => {
+    const storedId = localStorage.getItem("selectedAddressId");
+    const defaultAddress = addressList.find((a) => a.is_default);
+
+    setSelectedAddress(
+      storedId ? parseInt(storedId) : defaultAddress?.id || null
+    );
   };
 
   const validateAddress = (address: Partial<Address>) => {
     const errors: Record<string, string> = {};
-
     const getTrimmed = (value?: string | number | null) =>
       typeof value === "string" ? value.trim() : value?.toString().trim() || "";
 
@@ -134,9 +175,9 @@ const DeliveryAddresses = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault();
 
-    const errors = validateAddress(formData); // Validate formData instead of address parameter
+    const errors = validateAddress(formData);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       toast.error("Please correct the errors in the form.");
@@ -144,15 +185,11 @@ const DeliveryAddresses = () => {
     }
 
     const token = localStorage.getItem("authToken");
-    if (!token) {
-      toast.error("Please log in to continue.");
-      return;
-    }
-
+    const phoneNo = formData.phone_no;
     const payload = {
       name: formData.name,
       country_code: formData.country_code || "+1",
-      phone_no: formData.phone_no,
+      phone_no: phoneNo,
       address_line_1: formData.address_line_1,
       address_line_2: formData.address_line_2,
       landmark: formData.landmark,
@@ -165,37 +202,73 @@ const DeliveryAddresses = () => {
     };
 
     try {
-      const { data } = await axios.post(
-        `${apiBaseUrl}customer-addresses/add`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      setIsLoading(true);
+      let response;
+
+      if (token) {
+        // For logged-in users
+        response = await axios.post(
+          `${apiBaseUrl}customer-addresses/add`,
+          payload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } else {
+        // For guest users
+        response = await axios.post(
+          `${apiBaseUrl}customer-addresses/add`,
+          payload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        
+        // Store guest phone for future reference
+        if (phoneNo) {
+          localStorage.setItem("guestPhone", phoneNo);
         }
-      );
+      }
 
       toast.success("Address added successfully.");
       setFormData({});
       setFormErrors({});
       setShowAddressForm(false);
-      fetchAddresses(token);
+      
+      // Reload addresses
+      if (token) {
+        await fetchAddresses(token);
+      } else if (phoneNo) {
+        await fetchAddressesByPhone(phoneNo);
+      }
     } catch (error: any) {
       const errData = error.response?.data;
-
       if (errData?.errors) {
         const errorMessages = Object.values(errData.errors).flat().join(", ");
         toast.error(`Validation error: ${errorMessages}`);
       } else {
         toast.error(errData?.message || "Failed to submit address.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSelectAddress = (id: number) => {
-    setSelectedAddress(id);
-    localStorage.setItem("selectedAddressId", id.toString());
+      setSelectedAddress(id);
+      localStorage.setItem("selectedAddressId", id.toString());
+      // Notify parent component of selection
+      if (typeof window !== 'undefined' && window.parent) {
+          window.parent.postMessage({
+              type: 'addressSelected',
+              addressId: id.toString()
+          }, '*');
+      }
   };
 
   const updateForm = (field: keyof Address, value: string | boolean) => {
@@ -209,12 +282,7 @@ const DeliveryAddresses = () => {
   const renderFormFields = () => {
     const fieldsBeforeCountryState = [
       { name: "name", label: "Name", required: true },
-      {
-        name: "phone_no",
-        label: "Phone Number",
-        isPhone: true,
-        required: true,
-      },
+      { name: "phone_no", label: "Phone Number", isPhone: true, required: true },
       { name: "address_line_1", label: "Address Line 1", required: true },
       { name: "address_line_2", label: "Address Line 2", required: true },
       { name: "landmark", label: "Landmark", required: true },
@@ -258,14 +326,10 @@ const DeliveryAddresses = () => {
                   />
                 </div>
                 {formErrors.phone_no && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {formErrors.phone_no}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{formErrors.phone_no}</p>
                 )}
                 {formErrors.country_code && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {formErrors.country_code}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{formErrors.country_code}</p>
                 )}
               </div>
             );
@@ -287,9 +351,7 @@ const DeliveryAddresses = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg"
               />
               {formErrors[field.name] && (
-                <p className="text-red-500 text-sm mt-1">
-                  {formErrors[field.name]}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{formErrors[field.name]}</p>
               )}
             </div>
           );
@@ -360,9 +422,7 @@ const DeliveryAddresses = () => {
               className="w-full p-3 border border-gray-300 rounded-lg"
             />
             {formErrors[field.name] && (
-              <p className="text-red-500 text-sm mt-1">
-                {formErrors[field.name]}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{formErrors[field.name]}</p>
             )}
           </div>
         ))}
@@ -370,11 +430,22 @@ const DeliveryAddresses = () => {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="border p-4 rounded-md shadow-sm bg-gray-100">
+        <h2 className="text-xl font-semibold border-b pb-2">Delivery Address</h2>
+        <div className="flex justify-center items-center h-40">
+          <p>Loading addresses...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="border p-4 rounded-md shadow-sm bg-gray-100">
       <h2 className="text-xl font-semibold border-b pb-2">Delivery Address</h2>
 
-      {isLoggedIn && addresses.length > 0 && (
+      {addresses.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-4">
           {addresses.map((address) => (
             <label
@@ -408,8 +479,7 @@ const DeliveryAddresses = () => {
                     <div className="mt-1 space-y-0.5">
                       <p className="text-sm text-gray-700">
                         {address.address_line_1}
-                        {address.address_line_2 &&
-                          `, ${address.address_line_2}`}
+                        {address.address_line_2 && `, ${address.address_line_2}`}
                         , {address.landmark}, {address.city}, {address.state}{" "}
                         {address.zip_code}, {address.country}
                       </p>
@@ -430,31 +500,13 @@ const DeliveryAddresses = () => {
       )}
 
       <div className="mt-6">
-        {isLoggedIn ? (
-          <>
-            <button
-              onClick={() => setShowAddressForm(!showAddressForm)}
-              className="text-primary underline hover:text-primary/80 font-medium"
-            >
-              {showAddressForm ? "Hide Address Form" : "Add New Address"}
-            </button>
-            {showAddressForm && (
-              <form onSubmit={handleSubmit}>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {renderFormFields()}
-                </div>
-                <div className="mt-4">
-                  <button
-                    type="submit"
-                    className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90"
-                  >
-                    Submit
-                  </button>
-                </div>
-              </form>
-            )}
-          </>
-        ) : (
+        <button
+          onClick={() => setShowAddressForm(!showAddressForm)}
+          className="text-primary underline hover:text-primary/80 font-medium"
+        >
+          {showAddressForm ? "Hide Address Form" : "Add New Address"}
+        </button>
+        {showAddressForm && (
           <form onSubmit={handleSubmit}>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderFormFields()}
@@ -463,8 +515,9 @@ const DeliveryAddresses = () => {
               <button
                 type="submit"
                 className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90"
+                disabled={isLoading}
               >
-                Submit
+                {isLoading ? "Saving..." : "Save Address"}
               </button>
             </div>
           </form>
