@@ -112,11 +112,11 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
     const paymentMethod = selectedPaymentMethod || localStorage.getItem("selectedPaymentMethod");
 
     if (!addressId || !paymentMethod) {
-        toast.warning("Please select both delivery address and payment method");
-        return;
+      toast.warning("Please select both delivery address and payment method");
+      return;
     }
     setIsPlacingOrder(true);
-    
+
     try {
       const userDetails = JSON.parse(localStorage.getItem("userDetails") || "null");
       const cart = JSON.parse(localStorage.getItem("cart") || "{}");
@@ -139,12 +139,21 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
 
       const { data: result } = await axios.post(`${apiBaseUrl}place-order`, payload);
       toast.success("Order placed successfully!");
+
+      try {
+        await axios.post(`${apiBaseUrl}send-order-email`, {
+          order_id: result.order_id,
+        });
+      } catch (emailError: any) {
+        console.error("Email sending failed:", emailError);
+        toast.warn("Order placed but email failed to send.");
+      }
       
       // Clear cart and redirect
       localStorage.removeItem("cart");
       localStorage.removeItem("coupon_code");
       router.push(`/orders/${result.order_id}`);
-      
+
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Order failed");
     } finally {
@@ -169,8 +178,8 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
         promoMessage={promoMessage}
         setPromoMessage={setPromoMessage}
       />
-      <CartButtons 
-        productsLength={cartItems.length} 
+      <CartButtons
+        productsLength={cartItems.length}
         onPlaceOrder={handlePlaceOrder}
         isPlacingOrder={isPlacingOrder}
         isAddressAndPaymentSelected={!!selectedAddressId && !!selectedPaymentMethod}
