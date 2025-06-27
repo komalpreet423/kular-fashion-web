@@ -98,11 +98,11 @@ const DeliveryAddresses = () => {
 
   const fetchAddresses = async (token: string) => {
     try {
+      var userData = JSON.parse(localStorage.userDetails);
       setIsLoading(true);
-      const { data } = await axios.get(`${apiBaseUrl}customer-addresses`, {
+      const { data } = await axios.get(`${apiBaseUrl}customer-addresses/`+userData.id, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       setAddresses(data.data || []);
       updateSelectedAddress(data.data || []);
     } catch {
@@ -183,7 +183,16 @@ const DeliveryAddresses = () => {
       toast.error("Please correct the errors in the form.");
       return;
     }
+    var userData = {};
+    try {
+      const userDetails = localStorage.getItem("userDetails");
+      userData = userDetails ? JSON.parse(userDetails) : {};
+    } catch (e) {
+      console.error("Invalid JSON in userDetails:", e);
+      userData = {};
+    }
 
+    var user_id = userData?.id ?? 0;
     const token = localStorage.getItem("authToken");
     const phoneNo = formData.phone_no;
     const payload = {
@@ -199,6 +208,7 @@ const DeliveryAddresses = () => {
       country: formData.country,
       type: formData.type,
       is_default: false,
+      user_id : user_id
     };
 
     try {
