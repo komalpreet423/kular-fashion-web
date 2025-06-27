@@ -146,8 +146,8 @@ const Header: React.FC = () => {
               )}
 
               {isLoggedIn && showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50">
-                  <Link href="/my-account" className="block px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="absolute right-0 mt-2 w-40 bg-black border rounded shadow-lg z-50">
+                  <Link href="/my-account" className="block px-4 py-2 text-sm text-white hover:bg-gray-800">
                     My Account
                   </Link>
                   <button
@@ -158,7 +158,7 @@ const Header: React.FC = () => {
                       toast.success("Logged out successfully!");
                       setTimeout(() => (window.location.href = "/"), 2000);
                     }}
-                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800"
                   >
                     Logout
                   </button>
