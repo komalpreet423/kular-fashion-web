@@ -74,7 +74,7 @@ const OrderDetailsPage: React.FC = () => {
         if (!token) {
           if (!toastShownRef.current) {
             toastShownRef.current = true;
-            toast.success("Please login to view your orders.");
+           toast.success("Order placed! Check your email for the details.");
           }
           router.replace("/");
           return;

@@ -8,6 +8,7 @@ import CartButtons from '@/components/checkout/cart-buttons';
 import { apiBaseUrl, apiBaseRoot } from "@/config";
 import { toast } from "react-toastify";
 import axios from 'axios';
+import { useCart } from '@/context/cart-context';
 
 interface CartItem {
   id: number;
@@ -32,6 +33,7 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const router = useRouter();
+  const { clearCart } = useCart();
 
   useEffect(() => {
     fetchCartItems();
@@ -155,6 +157,8 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
       // Clear cart and redirect
       localStorage.removeItem("cart");
       localStorage.removeItem("coupon_code");
+      setCartItems([]); 
+        clearCart(); 
       router.push(`/orders/${result.order_id}`);
 
     } catch (error: any) {
