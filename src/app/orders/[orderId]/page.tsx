@@ -2,7 +2,7 @@
 
 import ProductPrice from "@/components/product/ProductPrice";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef  } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { apiBaseUrl } from "@/config";
@@ -57,6 +57,7 @@ const OrderDetailsPage: React.FC = () => {
   const { orderId } = useParams();
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const router = useRouter();
+  const toastShownRef = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -66,33 +67,35 @@ const OrderDetailsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (orderId) {
-      const fetchOrderDetails = async () => {
-        try {
-          const token = localStorage.getItem("authToken");
-          if (!token) {
-            toast.error("Unauthorized");
-            router.replace("/");
-            return;
+      if (orderId) {
+    const fetchOrderDetails = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          if (!toastShownRef.current) {
+            toastShownRef.current = true;
+            toast.success("Please login to view your orders.");
           }
+          router.replace("/");
+          return;
+        }
 
-          const response = await axios.get(
-            `${apiBaseUrl}order/show/${orderId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          const result = response.data;
-
-          if (!result.success || !result.data || result.data.length === 0) {
-            toast.error("Order not found");
-            return;
+        const response = await axios.get(
+          `${apiBaseUrl}order/show/${orderId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
+        );
+        const result = response.data;
+      
+        if (!result.success || !result.data || result.data.length === 0) {
+          toast.error("Order not found");
+          return;
+        }
 
-          const order = result.data[0];
+        const order = result.data[0];
 
           const mappedOrder: OrderDetails = {
             id: order.unique_order_id,

@@ -121,6 +121,7 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
       const userDetails = JSON.parse(localStorage.getItem("userDetails") || "null");
       const cart = JSON.parse(localStorage.getItem("cart") || "{}");
       const couponCode = localStorage.getItem("coupon_code") || null;
+       const addressId = selectedAddressId || JSON.parse(localStorage.getItem("selectedAddressId") || "null");
 
       const payload = {
         user_id: userDetails?.id || null,
@@ -138,7 +139,7 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
       }
 
       const { data: result } = await axios.post(`${apiBaseUrl}place-order`, payload);
-      toast.success("Order placed successfully!");
+      toast.success("Order placed and confirmation email sent!");
 
       try {
         await axios.post(`${apiBaseUrl}send-order-email`, {

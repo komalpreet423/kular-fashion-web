@@ -16,6 +16,7 @@ interface Address {
   landmark: string;
   city: string;
   state: string;
+    email?: string;
   zip_code: string;
   country: string;
   is_default: boolean;
@@ -37,9 +38,12 @@ const DeliveryAddresses = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [formData, setFormData] = useState<Partial<Address>>({
+
+  // ✅ Added `email` type
+  const [formData, setFormData] = useState<Partial<Address> & { email?: string }>({
     country_code: "+1",
   });
+
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>([]);
   const [states, setStates] = useState<StateData[]>([]);
@@ -54,9 +58,7 @@ const DeliveryAddresses = () => {
 
   useEffect(() => {
     if (formData.country) {
-      const selectedCountry = countries.find(
-        (c) => c.name === formData.country
-      );
+      const selectedCountry = countries.find((c) => c.name === formData.country);
       if (selectedCountry) {
         fetchStates(selectedCountry.id);
       }
@@ -68,7 +70,6 @@ const DeliveryAddresses = () => {
     if (token) {
       await fetchAddresses(token);
     } else {
-      // For guest users, try to fetch by phone number if available
       const guestPhone = localStorage.getItem("guestPhone");
       if (guestPhone) {
         await fetchAddressesByPhone(guestPhone);
@@ -100,7 +101,7 @@ const DeliveryAddresses = () => {
     try {
       var userData = JSON.parse(localStorage.userDetails);
       setIsLoading(true);
-      const { data } = await axios.get(`${apiBaseUrl}customer-addresses/`+userData.id, {
+      const { data } = await axios.get(`${apiBaseUrl}customer-addresses/` + userData.id, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAddresses(data.data || []);
@@ -116,12 +117,11 @@ const DeliveryAddresses = () => {
     try {
       setIsLoading(true);
       const { data } = await axios.get(`${apiBaseUrl}customer-addresses`, {
-        params: { phone_no: phone }
+        params: { phone_no: phone },
       });
 
       setAddresses(data.data || []);
       updateSelectedAddress(data.data || []);
-      
       if (data.data?.length === 0) {
         setShowAddressForm(true);
       }
@@ -135,41 +135,40 @@ const DeliveryAddresses = () => {
   const updateSelectedAddress = (addressList: Address[]) => {
     const storedId = localStorage.getItem("selectedAddressId");
     const defaultAddress = addressList.find((a) => a.is_default);
-
-    setSelectedAddress(
-      storedId ? parseInt(storedId) : defaultAddress?.id || null
-    );
+    setSelectedAddress(storedId ? parseInt(storedId) : defaultAddress?.id || null);
   };
 
-  const validateAddress = (address: Partial<Address>) => {
+  const validateAddress = (address: Partial<Address> & { email?: string }) => {
     const errors: Record<string, string> = {};
     const getTrimmed = (value?: string | number | null) =>
       typeof value === "string" ? value.trim() : value?.toString().trim() || "";
 
     if (!getTrimmed(address.name)) errors.name = "Please enter name.";
-    if (!getTrimmed(address.country_code))
-      errors.country_code = "Please select a country code.";
-    if (!getTrimmed(address.phone_no))
-      errors.phone_no = "Please enter phone no.";
-    if (!getTrimmed(address.address_line_1))
-      errors.address_line_1 = "Please enter address line 1.";
-    if (!getTrimmed(address.address_line_2))
-      errors.address_line_2 = "Please enter address line 2.";
-    if (!getTrimmed(address.landmark))
-      errors.landmark = "Please enter landmark.";
+    if (!getTrimmed(address.country_code)) errors.country_code = "Please select a country code.";
+    if (!getTrimmed(address.phone_no)) errors.phone_no = "Please enter phone no.";
+    if (!getTrimmed(address.address_line_1)) errors.address_line_1 = "Please enter address line 1.";
+    if (!getTrimmed(address.address_line_2)) errors.address_line_2 = "Please enter address line 2.";
+    if (!getTrimmed(address.landmark)) errors.landmark = "Please enter landmark.";
     if (!getTrimmed(address.city)) errors.city = "Please enter city name.";
     if (!getTrimmed(address.state)) errors.state = "Please enter state name.";
-
     const zip = getTrimmed(address.zip_code);
     if (!zip) {
       errors.zip_code = "Please enter zip-code.";
     } else if (!/^[0-9]{5,6}$/.test(zip)) {
       errors.zip_code = "This zip-code is invalid.";
     }
-
-    if (!getTrimmed(address.country))
-      errors.country = "Please enter country name.";
+    if (!getTrimmed(address.country)) errors.country = "Please enter country name.";
     if (!getTrimmed(address.type)) errors.type = "Please enter address type.";
+
+    // ✅ Validate guest email
+    if (!isLoggedIn) {
+      const email = getTrimmed(address.email);
+      if (!email) {
+        errors.email = "Please enter email.";
+      } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+        errors.email = "Please enter a valid email address.";
+      }
+    }
 
     return errors;
   };
@@ -183,12 +182,12 @@ const DeliveryAddresses = () => {
       toast.error("Please correct the errors in the form.");
       return;
     }
+
     var userData = {};
     try {
       const userDetails = localStorage.getItem("userDetails");
       userData = userDetails ? JSON.parse(userDetails) : {};
-    } catch (e) {
-      console.error("Invalid JSON in userDetails:", e);
+    } catch {
       userData = {};
     }
 
@@ -208,38 +207,27 @@ const DeliveryAddresses = () => {
       country: formData.country,
       type: formData.type,
       is_default: false,
-      user_id : user_id
+      user_id: user_id,
+      email: !isLoggedIn ? formData.email : undefined,
     };
 
     try {
       setIsLoading(true);
       let response;
-
       if (token) {
-        // For logged-in users
-        response = await axios.post(
-          `${apiBaseUrl}customer-addresses/add`,
-          payload,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        response = await axios.post(`${apiBaseUrl}customer-addresses/add`, payload, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
       } else {
-        // For guest users
-        response = await axios.post(
-          `${apiBaseUrl}customer-addresses/add`,
-          payload,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        
-        // Store guest phone for future reference
+        response = await axios.post(`${apiBaseUrl}customer-addresses/add`, payload, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
         if (phoneNo) {
           localStorage.setItem("guestPhone", phoneNo);
         }
@@ -249,8 +237,7 @@ const DeliveryAddresses = () => {
       setFormData({});
       setFormErrors({});
       setShowAddressForm(false);
-      
-      // Reload addresses
+
       if (token) {
         await fetchAddresses(token);
       } else if (phoneNo) {
@@ -270,18 +257,20 @@ const DeliveryAddresses = () => {
   };
 
   const handleSelectAddress = (id: number) => {
-      setSelectedAddress(id);
-      localStorage.setItem("selectedAddressId", id.toString());
-      // Notify parent component of selection
-      if (typeof window !== 'undefined' && window.parent) {
-          window.parent.postMessage({
-              type: 'addressSelected',
-              addressId: id.toString()
-          }, '*');
-      }
+    setSelectedAddress(id);
+    localStorage.setItem("selectedAddressId", id.toString());
+    if (typeof window !== "undefined" && window.parent) {
+      window.parent.postMessage(
+        {
+          type: "addressSelected",
+          addressId: id.toString(),
+        },
+        "*"
+      );
+    }
   };
 
-  const updateForm = (field: keyof Address, value: string | boolean) => {
+  const updateForm = (field: keyof (Address & { email?: string }), value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
       const { [field]: _, ...rest } = formErrors;
@@ -306,6 +295,27 @@ const DeliveryAddresses = () => {
 
     return (
       <>
+        {/* ✅ Guest-only email field */}
+        {!isLoggedIn && (
+          <div>
+            <label className="block mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email || ""}
+              onChange={(e) => updateForm("email", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg"
+              placeholder="Enter email address"
+            />
+            {formErrors.email && (
+              <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+            )}
+          </div>
+        )}
+
+        {/* Original fields before country/state */}
         {fieldsBeforeCountryState.map((field) => {
           if (field.isPhone) {
             return (
@@ -348,16 +358,13 @@ const DeliveryAddresses = () => {
           return (
             <div key={field.name}>
               <label className="block mb-1">
-                {field.label}{" "}
-                {field.required && <span className="text-red-500">*</span>}
+                {field.label} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 name={field.name}
                 value={formData[field.name as keyof Address] || ""}
-                onChange={(e) =>
-                  updateForm(field.name as keyof Address, e.target.value)
-                }
+                onChange={(e) => updateForm(field.name as keyof Address, e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg"
               />
               {formErrors[field.name] && (
@@ -367,6 +374,7 @@ const DeliveryAddresses = () => {
           );
         })}
 
+        {/* Country */}
         <div>
           <label className="block mb-1">
             Country <span className="text-red-500">*</span>
@@ -388,6 +396,7 @@ const DeliveryAddresses = () => {
           )}
         </div>
 
+        {/* State */}
         <div>
           <label className="block mb-1">
             State <span className="text-red-500">*</span>
@@ -397,9 +406,7 @@ const DeliveryAddresses = () => {
             onChange={(e) => updateForm("state", e.target.value)}
             disabled={states.length === 0}
             className={`w-full p-3 border rounded-lg ${
-              states.length === 0
-                ? "bg-gray-100 cursor-not-allowed"
-                : "border-gray-300"
+              states.length === 0 ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
             }`}
           >
             <option value="">
@@ -416,19 +423,17 @@ const DeliveryAddresses = () => {
           )}
         </div>
 
+        {/* Remaining fields */}
         {fieldsAfterCountryState.map((field) => (
           <div key={field.name}>
             <label className="block mb-1">
-              {field.label}{" "}
-              {field.required && <span className="text-red-500">*</span>}
+              {field.label} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name={field.name}
               value={formData[field.name as keyof Address] || ""}
-              onChange={(e) =>
-                updateForm(field.name as keyof Address, e.target.value)
-              }
+              onChange={(e) => updateForm(field.name as keyof Address, e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg"
             />
             {formErrors[field.name] && (
@@ -454,14 +459,10 @@ const DeliveryAddresses = () => {
   return (
     <div className="border p-4 rounded-md shadow-sm bg-gray-100">
       <h2 className="text-xl font-semibold border-b pb-2">Delivery Address</h2>
-
       {addresses.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-4">
           {addresses.map((address) => (
-            <label
-              key={address.id}
-              className="w-full md:w-[48%] cursor-pointer transition-all"
-            >
+            <label key={address.id} className="w-full md:w-[48%] cursor-pointer transition-all">
               <Card
                 className={`${
                   selectedAddress === address.id
@@ -479,9 +480,7 @@ const DeliveryAddresses = () => {
                   />
                   <div className="flex-1">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-base">
-                        {address.name}
-                      </span>
+                      <span className="font-semibold text-base">{address.name}</span>
                       <span className="px-3 py-1 text-white text-xs font-semibold bg-primary rounded-full">
                         {address.type}
                       </span>
@@ -489,16 +488,14 @@ const DeliveryAddresses = () => {
                     <div className="mt-1 space-y-0.5">
                       <p className="text-sm text-gray-700">
                         {address.address_line_1}
-                        {address.address_line_2 && `, ${address.address_line_2}`}
-                        , {address.landmark}, {address.city}, {address.state}{" "}
+                        {address.address_line_2 && `, ${address.address_line_2}`}, {address.landmark}, {address.city}, {address.state}{" "}
                         {address.zip_code}, {address.country}
                       </p>
                       <p className="text-sm text-gray-600">
                         <strong>Pin Code:</strong> {address.zip_code}
                       </p>
                       <p className="text-sm text-gray-600">
-                        <strong>Phone:</strong> {address.country_code} -{" "}
-                        {address.phone_no}
+                        <strong>Phone:</strong> {address.country_code} - {address.phone_no}
                       </p>
                     </div>
                   </div>
@@ -518,9 +515,7 @@ const DeliveryAddresses = () => {
         </button>
         {showAddressForm && (
           <form onSubmit={handleSubmit}>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderFormFields()}
-            </div>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">{renderFormFields()}</div>
             <div className="mt-4">
               <button
                 type="submit"
