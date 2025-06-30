@@ -37,6 +37,8 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
     fetchCartItems();
   }, []);
 
+  
+
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const fetchCartItems = async () => {
@@ -139,7 +141,7 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
       }
 
       const { data: result } = await axios.post(`${apiBaseUrl}place-order`, payload);
-      toast.success("Order placed and confirmation email sent!");
+     toast.success("Order placed and confirmation email sent!");
 
       try {
         await axios.post(`${apiBaseUrl}send-order-email`, {

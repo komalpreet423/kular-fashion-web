@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import DeliveryAddresses from "./components/DeliveryAddresses";
 import PaymentOptions from "./components/PaymentOptions";
 import OrderSummary from "./components/OrderSummary";
@@ -8,6 +9,19 @@ import OrderSummary from "./components/OrderSummary";
 const CheckoutPage = () => {
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+      const [isCartValidated, setIsCartValidated] = useState(false);
+      const router = useRouter();
+
+        useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const cart = localStorage.getItem("cart");
+
+    if (!token && (!cart || JSON.parse(cart).cartItems?.length === 0)) {
+      router.push("/");
+    } else {
+      setIsCartValidated(true);
+    }
+  }, []);
 
     // Handle guest address selection from iframe
     useEffect(() => {
@@ -31,6 +45,11 @@ const CheckoutPage = () => {
         setSelectedPaymentMethod(method);
         localStorage.setItem("selectedPaymentMethod", method);
     };
+    
+  if (!isCartValidated) {
+    return null; // Or a loading spinner if you prefer
+  }
+
 
     return (
         <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-6">
