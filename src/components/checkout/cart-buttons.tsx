@@ -27,12 +27,6 @@ const CartButtons = ({
           {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
         </Button>
       </motion.div>
-      
-      {productsLength > 0 && !isAddressAndPaymentSelected && (
-        <p className="mt-2 text-sm text-red-500 text-center">
-          Please complete your delivery and payment selections
-        </p>
-      )}
     </div>
   );
 };

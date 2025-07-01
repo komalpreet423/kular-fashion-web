@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -34,6 +34,7 @@ const OrdersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const router = useRouter();
+  const toastShownRef = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -55,6 +56,14 @@ const OrdersPage: React.FC = () => {
 
         const result = response.data;
 
+        if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
+          if (!toastShownRef.current) {
+            toast.error("Orders List is empty.");
+            toastShownRef.current = true;
+          }
+          setOrders([]);
+          return;
+        }
         const orders = result.data.map((order: any) => {
           const itemsCount = order.order_items.reduce(
             (acc: number, item: any) => acc + item.quantity,
@@ -138,11 +147,10 @@ const OrdersPage: React.FC = () => {
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  statusFilter === status
+                className={`px-4 py-2 rounded-lg font-medium ${statusFilter === status
                     ? "bg-primary text-white"
                     : "bg-gray-200 text-gray-700 hover:bg-primary hover:text-white"
-                } cursor-pointer transition-all`}
+                  } cursor-pointer transition-all`}
               >
                 {status}
               </button>

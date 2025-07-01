@@ -384,6 +384,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchCartItems();
   }, []);
+    const clearCart = () => {
+    setCartItems([]);
+    setCartCount(0);
+    setSubTotal(0);
+    setDiscount("0.00");
+    setTotal("0.00");
+  };
 
   return (
     <CartContext.Provider
@@ -398,6 +405,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeFromCart,
         updateQuantity,
         applyPromoCode,
+          clearCart,
       }}
     >
       {children}
