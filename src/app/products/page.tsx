@@ -131,14 +131,25 @@ export default function ProductsPage() {
       const response = await axios.get(`${apiBaseUrl}products`, { params });
       const data = response.data;
 
+      const productTypesMap = new Map();
+      data.data.forEach((product: any) => {
+        if (product.productType) {
+          productTypesMap.set(product.productType.id, {
+            id: product.productType.id,
+            name: product.productType.name
+          });
+        }
+      });
+      
+      const productTypes = Array.from(productTypesMap.values());
       const tempFilters = {
-        product_types: data.filters?.product_types?.data || [],
+        product_types: productTypes,
         sizes: data.filters?.sizes?.data || [],
         colors: data.filters?.colors || [],
         brands: brandData.data || [],
-        price: { 
-          min: data.filters?.price?.min || 0, 
-          max: data.filters?.price?.max || 0 
+        price: {
+          min: data.filters?.price?.min || 0,
+          max: data.filters?.price?.max || 0
         },
       };
 
@@ -233,17 +244,16 @@ export default function ProductsPage() {
   ) => {
     switch (type) {
       case "product_types":
-        return filters.product_types.find((cat) => cat.id === id)?.name || id;
+        const productType = filters.product_types.find(
+          (cat) => cat.id.toString() === id.toString()
+        );
+        return productType?.name || id;
       case "sizes":
         return filters.sizes.find((size) => size.id === id)?.name || id;
       case "colors":
-        return (
-          filters.colors.find((color) => color.id === id)?.color_code || id
-        );
+        return filters.colors.find((color) => color.id === id)?.color_code || id;
       case "brands":
-        return (
-          filters.brands.find((brand) => brand.id === id)?.name || id
-        );
+        return filters.brands.find((brand) => brand.id === id)?.name || id;
       default:
         return id;
     }
@@ -499,11 +509,10 @@ export default function ProductsPage() {
                         {[...Array(pagination.last_page)].map((_, index) => (
                           <PaginationItem key={index}>
                             <button
-                              className={`px-3 py-1 cursor-pointer rounded-md ${
-                                currentPage === index + 1
-                                  ? "bg-gray-900 text-white"
-                                  : "bg-gray-200"
-                              }`}
+                              className={`px-3 py-1 cursor-pointer rounded-md ${currentPage === index + 1
+                                ? "bg-gray-900 text-white"
+                                : "bg-gray-200"
+                                }`}
                               onClick={() => setCurrentPage(index + 1)}
                             >
                               {index + 1}
