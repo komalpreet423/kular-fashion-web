@@ -18,13 +18,13 @@ import NoProductsFound from '@/components/product/not-found';
 import { apiBaseUrl } from '@/config';
 import { Product, ProductSize, ProductColor } from '@/types/product';
 
-// Move main content to separate component
 function ProductPageContent({ slug }: { slug: string }) {
   const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
   const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInWishlist, setIsInWishlist] = useState(false);
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -44,6 +44,10 @@ function ProductPageContent({ slug }: { slug: string }) {
 
         const apiResponse = await res.json();
         setProduct(apiResponse.data);
+
+        // Check if product is in wishlist
+        const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+        setIsInWishlist(wishlist.some((item: any) => item.id === apiResponse.data.id));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load product');
       } finally {
@@ -94,6 +98,27 @@ function ProductPageContent({ slug }: { slug: string }) {
     } catch (err) {
       console.error("Add to cart error:", err);
       toast.error("Failed to add to cart. Please try again.");
+    }
+  };
+
+  const handleAddToWishlist = () => {
+    if (!product) return;
+
+    const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+    const productIndex = wishlist.findIndex((item: any) => item.id === product.id);
+
+    if (productIndex === -1) {
+      // Add to wishlist
+      const updatedWishlist = [...wishlist, { ...product, is_favourite: true }];
+      localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
+      setIsInWishlist(true);
+      toast.success("Added to wishlist");
+    } else {
+      // Remove from wishlist
+      const updatedWishlist = wishlist.filter((item: any) => item.id !== product.id);
+      localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
+      setIsInWishlist(false);
+      toast.success("Removed from wishlist");
     }
   };
 
@@ -156,6 +181,8 @@ function ProductPageContent({ slug }: { slug: string }) {
               <ProductActions
                 isDisabled={!selectedColor || !selectedSize}
                 onAddToCart={handleAddToCart}
+                onAddToWishlist={handleAddToWishlist}
+                isInWishlist={isInWishlist}
                 productId={product.id}
               />
 
@@ -175,7 +202,6 @@ function ProductPageContent({ slug }: { slug: string }) {
   );
 }
 
-// Main page component that handles the Promise params
 export default function ProductDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = React.use(params);
 
