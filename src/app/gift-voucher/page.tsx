@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import { apiBaseUrl } from "@/config";
 
 export default function GiftVoucherPage() {
-   const [startDate, setStartDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
   const [form, setForm] = useState({
     recipientEmail: "",
     senderName: "",
@@ -128,8 +128,9 @@ export default function GiftVoucherPage() {
               <DatePicker
                 selected={form.deliveryDate}
                 onChange={(date) => handleChange("deliveryDate", date)}
-                className="w-full border rounded-md px-4 py-2"
+                className="w-full !border !rounded-md !px-4 !py-2"
                 dateFormat="dd-MM-yyyy"
+                wrapperClassName="!w-full"
               />
               {errors.deliveryDate && (
                 <p className="text-sm text-red-600 mt-1">{errors.deliveryDate}</p>
