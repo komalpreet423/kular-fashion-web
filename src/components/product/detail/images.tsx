@@ -22,6 +22,9 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [isPrevDisabled, setIsPrevDisabled] = useState<boolean>(true);
     const [isNextDisabled, setIsNextDisabled] = useState<boolean>(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+    const imageContainerRef = useRef<HTMLDivElement>(null);
 
     // Filter images based on selectedColorId
     useEffect(() => {
@@ -34,7 +37,7 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
     // Reset selectedIndex when filteredImages changes
     useEffect(() => {
         setSelectedIndex(0);
-        updateArrows(0); // Update arrows when filteredImages changes
+        updateArrows(0);
     }, [filteredImages]);
 
     // Detect screen size to determine mobile/desktop view
@@ -67,10 +70,15 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
         updateArrows(index);
     };
 
-    // Update arrows when filteredImages changes
-    useEffect(() => {
-        updateArrows(selectedIndex);
-    }, [filteredImages]);
+    // Handle mouse move for zoom effect
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!imageContainerRef.current) return;
+
+        const { left, top, width, height } = imageContainerRef.current.getBoundingClientRect();
+        const x = ((e.clientX - left) / width) * 100;
+        const y = ((e.clientY - top) / height) * 100;
+        setZoomPosition({ x, y });
+    };
 
     if (!filteredImages.length || filteredImages.length === 1) {
         let thumbnail = `/images/default-product.png`;
@@ -79,19 +87,37 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
             thumbnail = apiBaseRoot + defaultImage;
         }
 
-        if((filteredImages || []).length > 0){
-            thumbnail = apiBaseRoot+filteredImages[0].path;
-        }    
+        if ((filteredImages || []).length > 0) {
+            thumbnail = apiBaseRoot + filteredImages[0].path;
+        }
 
-        return <><Image
-            src={thumbnail}
-            alt={'default_alt'}
-            width={400}
-            height={400}
-            className="object-contain shadow-lg"
-        /></>;
+        return (
+            <div
+                className="relative w-full h-[450px] overflow-hidden"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onMouseMove={handleMouseMove}
+                ref={imageContainerRef}
+            >
+                <Image
+                    src={thumbnail}
+                    alt={'default_alt'}
+                    fill
+                    className="object-contain shadow-lg"
+                />
+                {isHovered && (
+                    <div
+                        className="absolute inset-0 bg-no-repeat bg-[length:200%] pointer-events-none"
+                        style={{
+                            backgroundImage: `url(${thumbnail})`,
+                            backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                        }}
+                    />
+                )}
+            </div>
+        );
     }
-
+ 
     const settingsMain = {
         infinite: true,
         centerMode: true,
@@ -107,11 +133,11 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
         slidesToShow: Math.min(Math.max(filteredImages.length, 1), 3),
         slidesToScroll: 1,
         speed: 500,
-        arrows: false, // Using custom arrows
+        arrows: false,
         focusOnSelect: true,
-        vertical: !isMobile, // Vertical for desktop, horizontal for mobile
+        vertical: !isMobile,
         verticalSwiping: !isMobile,
-        afterChange: (current: number) => updateArrows(current), // Track scroll position
+        afterChange: (current: number) => updateArrows(current),
     };
 
     return (
@@ -120,14 +146,29 @@ const ProductImages: React.FC<ProductSliderProps> = ({ images, selectedColorId, 
             <div className="w-full md:w-5/6 md:mb-0">
                 <Slider {...settingsMain} ref={mainSliderRef}>
                     {filteredImages.map((image, index) => (
-                        <div key={index} className="relative w-[600px] h-[450px] rounded-lg overflow-hidden shadow-lg">
+                        <div
+                            key={index}
+                            className="relative w-[600px] h-[450px] rounded-lg overflow-hidden shadow-lg"
+                            onMouseEnter={() => setIsHovered(true)}
+                            onMouseLeave={() => setIsHovered(false)}
+                            onMouseMove={handleMouseMove}
+                            ref={imageContainerRef}
+                        >
                             <Image
                                 src={apiBaseRoot + image.path}
                                 alt={image.alt || 'default_alt'}
-                                width={600}
-                                height={450}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
                             />
+                            {isHovered && selectedIndex === index && (
+                                <div
+                                    className="absolute inset-0 bg-no-repeat bg-[length:200%] pointer-events-none"
+                                    style={{
+                                        backgroundImage: `url(${apiBaseRoot + image.path})`,
+                                        backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                                    }}
+                                />
+                            )}
                         </div>
                     ))}
                 </Slider>
