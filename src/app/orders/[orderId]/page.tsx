@@ -89,7 +89,7 @@ const OrderDetailsPage: React.FC = () => {
             }
           );
           const result = response.data;
-        
+
 
           if (!result.success || !result.data || result.data.length === 0) {
             toast.error("Order not found");
@@ -104,15 +104,30 @@ const OrderDetailsPage: React.FC = () => {
             orderStatus: order.status,
             deliveredOn: order.delivered_at?.split(" ")[0] || "",
             expectedDelivery: "",
-            items: order.order_items.map((item: any) => ({
-              productName: item.product.name,
-              quantity: item.quantity,
-              price: parseFloat(item.price),
-              imageUrl: item.product.web_image?.[0]?.path
-                ? `${apiBaseRoot}${item.product.web_image[0].path}`
-                : "/images/default-product.png",
+            items: order.order_items.map((item: any) => {
+              const product = item.product;
+              const images = product.web_image || [];
 
-            })),
+              const colorId = item.variant?.product_color_id;
+
+              const matchingImage = images.find(
+                (img: any) => img.product_color_id === colorId
+              );
+
+              const imageUrl = matchingImage
+                ? `${apiBaseRoot}${matchingImage.path}`
+                : images[0]
+                  ? `${apiBaseRoot}${images[0].path}`
+                  : "/images/default-product.png";
+
+              return {
+                productName: product.name,
+                quantity: item.quantity,
+                price: parseFloat(item.price),
+                imageUrl,
+              };
+            }),
+
             billing: {
               subtotal: parseFloat(order.subtotal),
               tax: parseFloat(order.tax),
