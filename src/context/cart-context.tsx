@@ -79,7 +79,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const json = await res.json();
         items = json.cart?.cart_items?.map((cartItem: any) => {
           const product = cartItem.variant?.product;
-          const imageFile = product?.web_image?.[0];
+          const variantColorId = cartItem.variant?.product_color_id;
+          const matchingImage = product?.web_image?.find(
+          (img: any) => img.product_color_id === variantColorId
+        );
+          const imageFile = matchingImage || product?.web_image?.[0]
           const image = imageFile
             ? `${apiBaseRoot}${imageFile.path}`
             : "/images/default-product.png";

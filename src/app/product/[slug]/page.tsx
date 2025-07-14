@@ -45,6 +45,10 @@ function ProductPageContent({ slug }: { slug: string }) {
         const apiResponse = await res.json();
         setProduct(apiResponse.data);
 
+        if (apiResponse.data.colors && apiResponse.data.colors.length > 0) {
+          setSelectedColor(apiResponse.data.colors[0]);
+        }
+      
         // Check if product is in wishlist
         const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
         setIsInWishlist(wishlist.some((item: any) => item.id === apiResponse.data.id));

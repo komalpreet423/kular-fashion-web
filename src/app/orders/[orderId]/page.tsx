@@ -89,7 +89,7 @@ const OrderDetailsPage: React.FC = () => {
             }
           );
           const result = response.data;
-          console.log(result);
+        
 
           if (!result.success || !result.data || result.data.length === 0) {
             toast.error("Order not found");
