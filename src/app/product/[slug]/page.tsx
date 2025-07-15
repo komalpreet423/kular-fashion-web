@@ -48,7 +48,7 @@ function ProductPageContent({ slug }: { slug: string }) {
         if (apiResponse.data.colors && apiResponse.data.colors.length > 0) {
           setSelectedColor(apiResponse.data.colors[0]);
         }
-
+      
         // Check if product is in wishlist
         const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
         setIsInWishlist(wishlist.some((item: any) => item.id === apiResponse.data.id));
@@ -179,8 +179,6 @@ function ProductPageContent({ slug }: { slug: string }) {
                 colors={product.colors}
                 sizes={product.sizes}
                 variants={product.variants}
-                selectedColor={selectedColor}
-                selectedSize={selectedSize}
                 onSelectionChange={handleSelectionChange}
               />
 

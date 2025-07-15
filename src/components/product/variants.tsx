@@ -7,30 +7,22 @@ interface ProductOptionsProps {
     colors: ProductColor[];
     sizes: ProductSize[];
     variants: ProductVariant[];
-     selectedColor: ProductColor | null;
-    selectedSize: ProductSize | null;
     onSelectionChange: (selectedColor: ProductColor | null, selectedSize: ProductSize | null) => void;
 }
 
-const ProductVariants = ({ 
-    colors, 
-    sizes, 
-    variants, 
-    selectedColor: initialSelectedColor, 
-    selectedSize: initialSelectedSize,
-    onSelectionChange 
-}: ProductOptionsProps) => {
-    const [selectedColor, setSelectedColor] = useState<ProductColor | null>(initialSelectedColor);
-    const [selectedSize, setSelectedSize] = useState<ProductSize | null>(initialSelectedSize);
-
-    // Update internal state when props change
-    useEffect(() => {
-        setSelectedColor(initialSelectedColor);
-    }, [initialSelectedColor]);
+const ProductVariants = ({ colors, sizes, variants, onSelectionChange }: ProductOptionsProps) => {
+    const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
+    const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
 
     useEffect(() => {
-        setSelectedSize(initialSelectedSize);
-    }, [initialSelectedSize]);
+        if (colors.length === 1) {
+            setSelectedColor(colors[0]);
+        }
+    }, [colors]);
+
+    useEffect(() => {
+        onSelectionChange(selectedColor, selectedSize);
+    }, [selectedColor, selectedSize, onSelectionChange]);
 
     const getVariantQuantity = (sizeId: number): number => {
         if (!selectedColor) return 0;
