@@ -8,17 +8,23 @@ interface ProductOptionsProps {
     sizes: ProductSize[];
     variants: ProductVariant[];
     onSelectionChange: (selectedColor: ProductColor | null, selectedSize: ProductSize | null) => void;
+    defaultColor?: ProductColor | null;
 }
 
-const ProductVariants = ({ colors, sizes, variants, onSelectionChange }: ProductOptionsProps) => {
+const ProductVariants = ({ colors, sizes, variants,  defaultColor, onSelectionChange }: ProductOptionsProps) => {
     const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
     const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
 
-    useEffect(() => {
-        if (colors.length === 1) {
-            setSelectedColor(colors[0]);
-        }
-    }, [colors]);
+   useEffect(() => {
+  if (!selectedColor) {
+    if (defaultColor) {
+      setSelectedColor(defaultColor);
+    } else if (colors.length === 1) {
+      setSelectedColor(colors[0]);
+    }
+  }
+  // Only run once on mount
+}, []);
 
     useEffect(() => {
         onSelectionChange(selectedColor, selectedSize);

@@ -180,6 +180,7 @@ function ProductPageContent({ slug }: { slug: string }) {
                 sizes={product.sizes}
                 variants={product.variants}
                 onSelectionChange={handleSelectionChange}
+                defaultColor={selectedColor}
               />
 
               <ProductActions
