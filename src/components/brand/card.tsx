@@ -9,6 +9,7 @@ import { apiBaseRoot } from "@/config";
 interface Brand {
   id: number;
   name: string;
+  slug: string;
   image: string;
 }
 
@@ -26,7 +27,7 @@ const BrandCard: React.FC<BrandCardProps> = ({ brand }) => {
       <Card className="p-0 gap-2 shadow-md rounded-none overflow-hidden relative">
         <div className="relative overflow-hidden rounded-t-xl">
           <motion.div className="transition-transform duration-300 transform hover:scale-110">
-            <Link href={`/brand/${brand.id}`}>
+            <Link href={`/brand/${brand.slug}`}>
               <Image
                 src={thumbnail}
                 alt={brand.name}
@@ -40,7 +41,7 @@ const BrandCard: React.FC<BrandCardProps> = ({ brand }) => {
         </div>
         <CardContent className="px-4 pb-2">
           {/* Mimicking the brand and product name layout */}
-          <Link href={`/brand/${brand.id}`}>
+          <Link href={`/brand/${brand.slug}`}>
             <p className="text-gray-500 my-0 text-sm cursor-pointer">
               {brand.name}
             </p>
