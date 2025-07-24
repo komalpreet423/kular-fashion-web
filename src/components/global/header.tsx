@@ -2,20 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useCurrency } from "@/context/CurrencyContext";
 import MiniCart from "@/components/cart/mini-cart";
 import SearchModal from "@/components/SearchModal/search";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { apiBaseUrl } from "@/config";
+import { apiBaseUrl, apiBaseRoot } from "@/config";
 import axios from "axios";
 
 import { CiMenuBurger, CiSearch, CiHeart } from "react-icons/ci";
 import { FaChevronDown } from "react-icons/fa";
 import { FiUser } from "react-icons/fi";
 import { IoCallOutline } from "react-icons/io5";
+import { CiDeliveryTruck } from "react-icons/ci";
+
+
 
 interface Department {
   id: number;
@@ -34,6 +37,12 @@ interface UserDetails {
   email: string;
 }
 
+interface SubmenuOption {
+  id: number;
+  text: string;
+  icon: string;
+}
+
 const CurrencySelector = () => {
   const { currency, setCurrency } = useCurrency();
 
@@ -49,7 +58,11 @@ const CurrencySelector = () => {
     </select>
   );
 };
-
+const chunkArray = (arr: any[], size: number) => {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+};
 const Header: React.FC = () => {
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
@@ -58,6 +71,14 @@ const Header: React.FC = () => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [deliveryOffers, setDeliveryOffers] = useState<SubmenuOption[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [currentGroup, setCurrentGroup] = useState(0);
+  const groupedOffers = chunkArray(deliveryOffers, 3);
+  const [manualScroll, setManualScroll] = useState(false);
+
+
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem("userDetails");
@@ -71,6 +92,29 @@ const Header: React.FC = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    axios
+      .get(`${apiBaseUrl}submenu-options`)
+      .then((res) => {
+        setDeliveryOffers(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch delivery offers:", err);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (manualScroll) return;
+
+    const interval = setInterval(() => {
+      setCurrentGroup((prev) =>
+        prev + 1 >= groupedOffers.length ? 0 : prev + 1
+      );
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [groupedOffers.length, manualScroll]);
 
   useEffect(() => {
     const handleScroll = () => setIsSticky(window.scrollY > 50);
@@ -256,8 +300,72 @@ const Header: React.FC = () => {
           </div>
         </div>
       </header>
+      <div
+        className="max-w-7xl mx-auto px-4 relative overflow-hidden cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={(e) => {
+          setManualScroll(true);
+          scrollRef.current!.dataset.dragging = "true";
+          scrollRef.current!.dataset.startX = e.clientX.toString();
+          scrollRef.current!.dataset.scrollX = currentGroup.toString();
+        }}
+        onMouseMove={(e) => {
+          if (scrollRef.current!.dataset.dragging !== "true") return;
+
+          const startX = parseFloat(scrollRef.current!.dataset.startX || "0");
+          const deltaX = e.clientX - startX;
+
+          if (Math.abs(deltaX) > 50) {
+            const direction = deltaX > 0 ? -1 : 1;
+            setCurrentGroup((prev) => {
+              const newIndex = prev + direction;
+              if (newIndex < 0 || newIndex >= groupedOffers.length) return prev;
+              scrollRef.current!.dataset.startX = e.clientX.toString(); 
+              return newIndex;
+            });
+          }
+        }}
+        onMouseUp={() => {
+          scrollRef.current!.dataset.dragging = "false";
+          setTimeout(() => setManualScroll(false), 1000);
+        }}
+        onMouseLeave={() => {
+          scrollRef.current!.dataset.dragging = "false";
+          setTimeout(() => setManualScroll(false), 1000);
+        }}
+      >
+        <div
+          ref={scrollRef}
+          className="flex transition-transform duration-700 ease-in-out"
+          style={{
+            width: `${groupedOffers.length * 100}%`,
+            transform: `translateX(-${currentGroup * (100 / groupedOffers.length)}%)`,
+          }}
+        >
+          {groupedOffers.map((group, index) => (
+            <div
+              key={index}
+              className="w-full flex justify-center gap-16 items-center shrink-0"
+              style={{ width: `${100 / groupedOffers.length}%` }}
+            >
+              {group.map((offer) => (
+                <div key={offer.id} className="flex items-center space-x-2 text-black text-sm cursor-default">
+                  <img
+                    src={`${apiBaseUrl.replace("/api/", "")}/storage/${offer.icon}`}
+                    alt={offer.name}
+                    className="w-5 h-10 object-contain"
+                  />
+                  <span>{offer.name}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+
     </>
   );
+
 };
 
 export default Header;
