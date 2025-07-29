@@ -61,7 +61,11 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
 
         const cartItems = json.cart?.cart_items?.map((cartItem: any) => {
           const product = cartItem.variant?.product;
-          const imageFile = product?.web_image?.[0];
+           const variantColorId = cartItem.variant?.product_color_id;
+        const matchingImage = product?.web_image?.find(
+          (img: any) => img.product_color_id === variantColorId
+        );
+          const imageFile = matchingImage || product?.web_image?.[0];
           const image = imageFile ? `${apiBaseRoot}${imageFile.path}` : "/images/temp/product1.jpg";
 
           return {
@@ -125,12 +129,13 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
       const userDetails = JSON.parse(localStorage.getItem("userDetails") || "null");
       const cart = JSON.parse(localStorage.getItem("cart") || "{}");
       const couponCode = localStorage.getItem("coupon_code") || null;
-       const addressId = selectedAddressId || JSON.parse(localStorage.getItem("selectedAddressId") || "null");
+      const addressId = selectedAddressId || JSON.parse(localStorage.getItem("selectedAddressId") || "null");
+      //const paymentMethod = selectedPaymentMethod || localStorage.getItem("selectedPaymentMethod");
 
       const payload = {
         user_id: userDetails?.id || null,
-        delivery_address_id: selectedAddressId,
-        payment_mode: selectedPaymentMethod,
+        delivery_address_id: addressId,
+        payment_mode: paymentMethod,
         coupon_code: couponCode,
       };
 
