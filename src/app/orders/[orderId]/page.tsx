@@ -2,10 +2,10 @@
 
 import ProductPrice from "@/components/product/ProductPrice";
 import { useParams } from "next/navigation";
-import { useEffect, useState,useRef  } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { apiBaseUrl } from "@/config";
+import { apiBaseUrl, apiBaseRoot } from "@/config";
 import axios from "axios";
 
 interface Product {
@@ -67,35 +67,36 @@ const OrderDetailsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-      if (orderId) {
-    const fetchOrderDetails = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        if (!token) {
-          if (!toastShownRef.current) {
-            toastShownRef.current = true;
-           toast.success("Order placed! Check your email for the details.");
+    if (orderId) {
+      const fetchOrderDetails = async () => {
+        try {
+          const token = localStorage.getItem("authToken");
+          if (!token) {
+            if (!toastShownRef.current) {
+              toastShownRef.current = true;
+              toast.success("Order placed! Check your email for the details.");
+            }
+            router.replace("/");
+            return;
           }
-          router.replace("/");
-          return;
-        }
 
-        const response = await axios.get(
-          `${apiBaseUrl}order/show/${orderId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          const response = await axios.get(
+            `${apiBaseUrl}order/show/${orderId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          const result = response.data;
+
+
+          if (!result.success || !result.data || result.data.length === 0) {
+            toast.error("Order not found");
+            return;
           }
-        );
-        const result = response.data;
-      
-        if (!result.success || !result.data || result.data.length === 0) {
-          toast.error("Order not found");
-          return;
-        }
 
-        const order = result.data[0];
+          const order = result.data[0];
 
           const mappedOrder: OrderDetails = {
             id: order.unique_order_id,
@@ -103,12 +104,30 @@ const OrderDetailsPage: React.FC = () => {
             orderStatus: order.status,
             deliveredOn: order.delivered_at?.split(" ")[0] || "",
             expectedDelivery: "",
-            items: order.order_items.map((item: any) => ({
-              productName: item.product.name,
-              quantity: item.quantity,
-              price: parseFloat(item.price),
-              imageUrl: item.product.image || "/images/default-product.png",
-            })),
+            items: order.order_items.map((item: any) => {
+              const product = item.product;
+              const images = product.web_image || [];
+
+              const colorId = item.variant?.product_color_id;
+
+              const matchingImage = images.find(
+                (img: any) => img.product_color_id === colorId
+              );
+
+              const imageUrl = matchingImage
+                ? `${apiBaseRoot}${matchingImage.path}`
+                : images[0]
+                  ? `${apiBaseRoot}${images[0].path}`
+                  : "/images/default-product.png";
+
+              return {
+                productName: product.name,
+                quantity: item.quantity,
+                price: parseFloat(item.price),
+                imageUrl,
+              };
+            }),
+
             billing: {
               subtotal: parseFloat(order.subtotal),
               tax: parseFloat(order.tax),
@@ -181,6 +200,9 @@ const OrderDetailsPage: React.FC = () => {
               : "bg-blue-100 text-blue-600"
               }`}
           >
+
+
+
             {orderDetails.orderStatus.replace(/-/g, " ").toUpperCase()}
           </div>
         </div>
@@ -192,8 +214,8 @@ const OrderDetailsPage: React.FC = () => {
 
           <div
             className={`gap-3 ${orderDetails.items.length <= 2
-                ? "flex justify-start"
-                : "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))]"
+              ? "flex justify-start"
+              : "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))]"
               }`}
           >
             {orderDetails.items.map((item, idx) => (
