@@ -10,21 +10,6 @@ export default function SubscribeNewsletter() {
   const [email, setEmail] = useState<string>("");
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [newsletterBg, setNewsletterBg] = useState<string | null>(null);
-
-  useEffect(() => {
-    axios
-      .get(`${apiBaseUrl}home-images`)
-      .then((res) => {
-        const images = res.data?.newsletter_images;
-        if (res.data.success && images.length > 0) {
-          setNewsletterBg(images[0].image_url);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch newsletter image", err);
-      });
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
