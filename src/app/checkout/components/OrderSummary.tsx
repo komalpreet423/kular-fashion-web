@@ -129,12 +129,13 @@ const OrderSummary = ({ selectedAddressId, selectedPaymentMethod }: OrderSummary
       const userDetails = JSON.parse(localStorage.getItem("userDetails") || "null");
       const cart = JSON.parse(localStorage.getItem("cart") || "{}");
       const couponCode = localStorage.getItem("coupon_code") || null;
-       const addressId = selectedAddressId || JSON.parse(localStorage.getItem("selectedAddressId") || "null");
+      const addressId = selectedAddressId || JSON.parse(localStorage.getItem("selectedAddressId") || "null");
+      //const paymentMethod = selectedPaymentMethod || localStorage.getItem("selectedPaymentMethod");
 
       const payload = {
         user_id: userDetails?.id || null,
-        delivery_address_id: selectedAddressId,
-        payment_mode: selectedPaymentMethod,
+        delivery_address_id: addressId,
+        payment_mode: paymentMethod,
         coupon_code: couponCode,
       };
 
