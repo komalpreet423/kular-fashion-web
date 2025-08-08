@@ -144,4 +144,6 @@
  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
 
-
+nav.hidden.md\:flex.space-x-4.w-full.justify-center.items-center.relative {
+    text-transform: uppercase;
+}
