@@ -239,10 +239,10 @@ const Header: React.FC = () => {
                     </div>
                   ))}
                   <Link href="/brands">Brands</Link>
-                  <Link href="/products">Clothing</Link>
+                  {/*<Link href="/products">Clothing</Link>
                   <Link href="/products">Footwear</Link>
                   <Link href="/products">Lifestyle</Link>
-                  <Link href="/products">Sale</Link>
+                  <Link href="/products">Sale</Link>*/}
                   {isLoggedIn && <Link href="/orders">Orders</Link>}
                   <Link href="/wishlist">Wishlist</Link>
                 </nav>
@@ -283,10 +283,10 @@ const Header: React.FC = () => {
               </div>
             ))}
             <Link href="/brands">Brands</Link>
-            <Link href="/products">Clothing</Link>
+            {/*<Link href="/products">Clothing</Link>
             <Link href="/products">Footwear</Link>
             <Link href="/products">Lifestyle</Link>
-            <Link href="/products">Sale</Link>
+            <Link href="/products">Sale</Link>*/}
             {isLoggedIn && <Link href="/orders">Orders</Link>}
             <Link href="/wishlist">Wishlist</Link>
           </nav>
