@@ -7,8 +7,11 @@ import { apiBaseUrl, apiBaseRoot } from '@/config';
 import ProductCard from '@/components/product/card';
 import { ProductBase } from '@/types/product';
 import { Skeleton } from '@/components/ui/skeleton';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { IoCloseSharp } from 'react-icons/io5';
+import { motion } from 'framer-motion';
+import FilterSidebar from '@/components/product/filter-sidebar';
 import { Button } from '@/components/ui/button';
+import { debounce } from 'lodash';
 
 interface WebPage {
   id: number;
@@ -17,6 +20,7 @@ interface WebPage {
   heading: string;
   content: string;
   description: string;
+  summary: string;
   image_large: string | null;
   rules: Array<{
     type: 'must' | 'must_not';
@@ -41,13 +45,6 @@ interface SelectedFilters {
   price: { min: number; max: number };
 }
 
-interface ActiveFilter {
-  type: string;
-  value: string;
-  label: string;
-  display?: React.ReactNode;
-}
-
 const ProductCardSkeleton = () => (
   <div className="flex flex-col space-y-3">
     <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -59,308 +56,19 @@ const ProductCardSkeleton = () => (
   </div>
 );
 
-const FiltersSkeleton = () => (
-  <div className="space-y-4">
-    <Skeleton className="h-6 w-1/2" />
-    <Skeleton className="h-4 w-full" />
-    <Skeleton className="h-4 w-full" />
-    <Skeleton className="h-4 w-full" />
-  </div>
-);
-
-const ActiveFiltersDisplay = ({
-  selectedFilters,
-  availableFilters,
-  onRemove,
-}: {
-  selectedFilters: SelectedFilters;
-  availableFilters: Filter;
-  onRemove: (type: string, value?: string) => void;
-}) => {
-  const activeFilters = useMemo(() => {
-    const filters: ActiveFilter[] = [];
-
-    selectedFilters.product_types.forEach(id => {
-      const f = availableFilters.product_types.find(i => i.id === id);
-      if (f) filters.push({ type: 'product_types', value: id, label: f.name });
-    });
-
-    selectedFilters.sizes.forEach(id => {
-      const f = availableFilters.sizes.find(i => i.id === id);
-      if (f) filters.push({ type: 'sizes', value: id, label: f.name });
-    });
-
-    selectedFilters.colors.forEach(id => {
-      const f = availableFilters.colors.find(i => i.id === id);
-      if (f) filters.push({
-        type: 'colors',
-        value: id,
-        label: 'Color',
-        display: (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full border" style={{ backgroundColor: f.color_code }} />
-            <span>Color</span>
-          </div>
-        ),
-      });
-    });
-
-    selectedFilters.brands.forEach(id => {
-      const f = availableFilters.brands.find(i => i.id === id);
-      if (f) filters.push({ type: 'brands', value: id, label: f.name });
-    });
-
-    if (
-      selectedFilters.price.max > 0 &&
-      (selectedFilters.price.min !== availableFilters.price.min ||
-        selectedFilters.price.max !== availableFilters.price.max)
-    ) {
-      filters.push({
-        type: 'price',
-        value: 'price-range',
-        label: `£${selectedFilters.price.min} - £${selectedFilters.price.max}`,
-      });
-    }
-
-    return filters;
-  }, [selectedFilters, availableFilters]);
-
-  if (activeFilters.length === 0) return null;
-
-  return (
-    <div className="flex flex-wrap gap-2 mb-4">
-      {activeFilters.map(filter => (
-        <Button
-          key={`${filter.type}-${filter.value}`}
-          variant="outline"
-          size="sm"
-          onClick={() => onRemove(filter.type, filter.value)}
-          className="flex items-center gap-1"
-        >
-          {filter.display || filter.label}
-          <X className="h-3 w-3" />
-        </Button>
-      ))}
-    </div>
-  );
-};
-
-const FilterSidebar = ({
-  filters,
-  selectedFilters,
-  onFilterChange,
-  onResetFilters,
-}: {
-  filters: Filter;
-  selectedFilters: SelectedFilters;
-  onFilterChange: (type: keyof SelectedFilters, value: any) => void;
-  onResetFilters: () => void;
-}) => {
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    product_types: false,
-    sizes: false,
-    colors: false,
-    brands: false,
-    price: false,
-  });
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="font-bold text-lg">Filters</h3>
-        <button
-          onClick={onResetFilters}
-          className="text-sm text-blue-600 hover:underline"
-        >
-          Reset all
-        </button>
-      </div>
-
-      {/* Product Types Filter */}
-      <div className="border-b pb-4">
-        <button
-          className="flex justify-between items-center w-full"
-          onClick={() => toggleSection('product_types')}
-        >
-          <span className="font-medium">Product Types</span>
-          {expandedSections.product_types ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {expandedSections.product_types && (
-          <div className="mt-2 space-y-2">
-            {filters.product_types.map(type => (
-              <div key={type.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`type-${type.id}`}
-                  checked={selectedFilters.product_types.includes(type.id)}
-                  onChange={() => {
-                    const newTypes = selectedFilters.product_types.includes(type.id)
-                      ? selectedFilters.product_types.filter(id => id !== type.id)
-                      : [...selectedFilters.product_types, type.id];
-                    onFilterChange('product_types', newTypes);
-                  }}
-                  className="mr-2"
-                />
-                <label htmlFor={`type-${type.id}`}>{type.name}</label>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Sizes Filter */}
-      <div className="border-b pb-4">
-        <button
-          className="flex justify-between items-center w-full"
-          onClick={() => toggleSection('sizes')}
-        >
-          <span className="font-medium">Sizes</span>
-          {expandedSections.sizes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {expandedSections.sizes && (
-          <div className="mt-2 space-y-2">
-            {filters.sizes.map(size => (
-              <div key={size.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`size-${size.id}`}
-                  checked={selectedFilters.sizes.includes(size.id)}
-                  onChange={() => {
-                    const newSizes = selectedFilters.sizes.includes(size.id)
-                      ? selectedFilters.sizes.filter(id => id !== size.id)
-                      : [...selectedFilters.sizes, size.id];
-                    onFilterChange('sizes', newSizes);
-                  }}
-                  className="mr-2"
-                />
-                <label htmlFor={`size-${size.id}`}>{size.name}</label>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Colors Filter */}
-      <div className="border-b pb-4">
-        <button
-          className="flex justify-between items-center w-full"
-          onClick={() => toggleSection('colors')}
-        >
-          <span className="font-medium">Colors</span>
-          {expandedSections.colors ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {expandedSections.colors && (
-          <div className="mt-2 grid grid-cols-4 gap-2">
-            {filters.colors.map(color => (
-              <div key={color.id} className="flex flex-col items-center">
-                <button
-                  onClick={() => {
-                    const newColors = selectedFilters.colors.includes(color.id)
-                      ? selectedFilters.colors.filter(id => id !== color.id)
-                      : [...selectedFilters.colors, color.id];
-                    onFilterChange('colors', newColors);
-                  }}
-                  className={`w-8 h-8 rounded-full border-2 ${selectedFilters.colors.includes(color.id) ? 'border-blue-500' : 'border-transparent'}`}
-                  style={{ backgroundColor: color.color_code }}
-                  aria-label={color.color_code}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Brands Filter */}
-      <div className="border-b pb-4">
-        <button
-          className="flex justify-between items-center w-full"
-          onClick={() => toggleSection('brands')}
-        >
-          <span className="font-medium">Brands</span>
-          {expandedSections.brands ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {expandedSections.brands && (
-          <div className="mt-2 space-y-2">
-            {filters.brands.map(brand => (
-              <div key={brand.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`brand-${brand.id}`}
-                  checked={selectedFilters.brands.includes(brand.id)}
-                  onChange={() => {
-                    const newBrands = selectedFilters.brands.includes(brand.id)
-                      ? selectedFilters.brands.filter(id => id !== brand.id)
-                      : [...selectedFilters.brands, brand.id];
-                    onFilterChange('brands', newBrands);
-                  }}
-                  className="mr-2"
-                />
-                <label htmlFor={`brand-${brand.id}`}>{brand.name}</label>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Price Filter */}
-      <div className="border-b pb-4">
-        <button
-          className="flex justify-between items-center w-full"
-          onClick={() => toggleSection('price')}
-        >
-          <span className="font-medium">Price Range</span>
-          {expandedSections.price ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {expandedSections.price && (
-          <div className="mt-4">
-            <div className="flex justify-between mb-2">
-              <span>£{filters.price.min}</span>
-              <span>£{filters.price.max}</span>
-            </div>
-            <input
-              type="range"
-              min={filters.price.min}
-              max={filters.price.max}
-              value={selectedFilters.price.max > 0 ? selectedFilters.price.max : filters.price.max}
-              onChange={(e) => {
-                onFilterChange('price', {
-                  min: filters.price.min,
-                  max: parseInt(e.target.value),
-                });
-              }}
-              className="w-full"
-            />
-            <div className="flex justify-between mt-4">
-              <button
-                className="px-3 py-1 border rounded text-sm"
-                onClick={() => onFilterChange('price', { min: filters.price.min, max: filters.price.max })}
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export default function WebPage() {
   const { slug } = useParams() as { slug: string };
   const [webPage, setWebPage] = useState<WebPage | null>(null);
   const [products, setProducts] = useState<ProductBase[]>([]);
-  const [filters, setFilters] = useState<Filter>({
-    product_types: [],
-    sizes: [],
-    colors: [],
-    brands: [],
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage] = useState(12);
+  const [filters, setFilters] = useState({
+    product_types: [] as { id: string; name: string }[],
+    sizes: [] as { id: string; name: string }[],
+    colors: [] as { id: string; color_code: string }[],
+    brands: [] as { id: string; name: string }[],
     price: { min: 0, max: 0 },
   });
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
@@ -370,29 +78,95 @@ export default function WebPage() {
     brands: [],
     price: { min: 0, max: -1 },
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const isAnyFilterSelected = useMemo(() => (
-    selectedFilters.product_types.length > 0 ||
-    selectedFilters.sizes.length > 0 ||
-    selectedFilters.colors.length > 0 ||
-    selectedFilters.brands.length > 0 ||
-    selectedFilters.price.max > 0
-  ), [selectedFilters]);
+  const memoizedSelectedFilters = useMemo(
+    () => selectedFilters,
+    [
+      JSON.stringify(selectedFilters.product_types),
+      JSON.stringify(selectedFilters.sizes),
+      JSON.stringify(selectedFilters.colors),
+      JSON.stringify(selectedFilters.brands),
+      selectedFilters.price.min,
+      selectedFilters.price.max,
+    ]
+  );
 
-  const handleRemoveFilter = (type: keyof SelectedFilters, value?: string) => {
-    setSelectedFilters(prev => {
-      if (type === 'price') return { ...prev, price: { min: 0, max: -1 } };
-      if (value) {
-        return {
-          ...prev,
-          [type]: (prev[type] as string[]).filter(item => item !== value),
-        };
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const params: Record<string, string> = {
+        per_page: perPage.toString(),
+        page: currentPage.toString(),
+        filters: 'true',
+      };
+
+      // Add filter params if they exist
+      if (selectedFilters.product_types.length > 0) {
+        params.product_types = selectedFilters.product_types.join(',');
       }
-      return { ...prev, [type]: [] };
-    });
+      if (selectedFilters.sizes.length > 0) {
+        params.sizes = selectedFilters.sizes.join(',');
+      }
+      if (selectedFilters.colors.length > 0) {
+        params.colors = selectedFilters.colors.join(',');
+      }
+      if (selectedFilters.brands.length > 0) {
+        params.brands = selectedFilters.brands.join(',');
+      }
+      if (selectedFilters.price.min >= 0) {
+        params.min_price = selectedFilters.price.min.toString();
+      }
+      if (selectedFilters.price.max > selectedFilters.price.min) {
+        params.max_price = selectedFilters.price.max.toString();
+      }
+
+      const pageRes = await axios.get(`${apiBaseUrl}web-pages/${slug}`, { params });
+      if (!pageRes.data.success) throw new Error("Page not found");
+
+      const filtersRes = await axios.get(`${apiBaseUrl}products`, {
+        params: { filters: true },
+      });
+
+      const brandsRes = await axios.get(`${apiBaseUrl}brands`);
+
+      setWebPage(pageRes.data.data.page);
+      setProducts(pageRes.data.data.products || []);
+      setFilters({
+        product_types: filtersRes.data.filters?.product_types?.data?.map((type: any) => ({
+          id: type.id.toString(),
+          name: type.name
+        })) || [],
+        sizes: filtersRes.data.filters?.sizes?.data?.map((size: any) => ({
+          id: size.id.toString(),
+          name: size.name
+        })) || [],
+        colors: filtersRes.data.filters?.colors?.map((color: any) => ({
+          id: color.id.toString(),
+          color_code: color.hex || color.color_code
+        })) || [],
+        brands: brandsRes.data?.data?.map((brand: any) => ({
+          id: brand.id.toString(),
+          name: brand.name
+        })) || [],
+        price: filtersRes.data.filters?.price || { min: 0, max: 0 },
+      });
+
+      setError(null);
+    } catch (err: any) {
+      setError('Failed to load page');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const debouncedFetchData = debounce(fetchData, 300);
+
+  useEffect(() => {
+    if (slug) {
+      debouncedFetchData();
+    }
+    return () => debouncedFetchData.cancel();
+  }, [slug, currentPage, memoizedSelectedFilters]);
 
   const resetFilters = () => {
     setSelectedFilters({
@@ -400,58 +174,77 @@ export default function WebPage() {
       sizes: [],
       colors: [],
       brands: [],
-      price: { min: 0, max: -1 },
+      price: { min: filters.price.min, max: filters.price.max },
     });
+    setCurrentPage(1);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const handleRemoveFilter = (
+    type: keyof SelectedFilters,
+    value: string | object
+  ) => {
+    setSelectedFilters((prev) => {
+      const currentFilter = prev[type];
 
-        const pageRes = await axios.get(`${apiBaseUrl}web-pages/${slug}`);
-        if (!pageRes.data.success) throw new Error("Page not found");
-
-        const filtersRes = await axios.get(`${apiBaseUrl}products`, {
-          params: { filters: true },
-        });
-
-        const brandsRes = await axios.get(`${apiBaseUrl}brands`);
-
-        setWebPage(pageRes.data.data.page);
-        setProducts(pageRes.data.data.products || []);
-        setFilters({
-          product_types: filtersRes.data.filters?.product_types?.data || [],
-          sizes: filtersRes.data.filters?.sizes?.data || [],
-          colors: filtersRes.data.filters?.colors || [],
-          brands: brandsRes.data?.data || [],
-          price: filtersRes.data.filters?.price || { min: 0, max: 0 },
-        });
-
-        setError(null);
-      } catch (err: any) {
-        setError('Failed to load page');
-      } finally {
-        setLoading(false);
+      if (Array.isArray(currentFilter)) {
+        return {
+          ...prev,
+          [type]: currentFilter.filter((item) => item !== value),
+        };
+      } else if (type === "price") {
+        return {
+          ...prev,
+          price: { min: 0, max: -1 },
+        };
       }
-    };
 
-    fetchData();
-  }, [slug]);
+      return prev;
+    });
+    setCurrentPage(1);
+  };
+
+  const getFilterNameById = (
+    type: "product_types" | "sizes" | "colors" | "brands",
+    id: string
+  ) => {
+    switch (type) {
+      case "product_types":
+        const productType = filters.product_types.find(
+          (cat) => cat.id.toString() === id.toString()
+        );
+        return productType?.name || id;
+      case "sizes":
+        return filters.sizes.find((size) => size.id === id)?.name || id;
+      case "colors":
+        return filters.colors.find((color) => color.id === id)?.color_code || id;
+      case "brands":
+        return filters.brands.find((brand) => brand.id === id)?.name || id;
+      default:
+        return id;
+    }
+  };
+
+  const isAnyFilterSelected =
+    selectedFilters.product_types.length > 0 ||
+    selectedFilters.sizes.length > 0 ||
+    selectedFilters.colors.length > 0 ||
+    selectedFilters.brands.length > 0 ||
+    ((selectedFilters.price.min !== filters.price.min ||
+      selectedFilters.price.max !== filters.price.max) &&
+      selectedFilters.price.max >= 0);
 
   const imageUrl = webPage?.image_large ? `${apiBaseRoot}assets/images/${webPage.image_large}` : null;
 
   return (
     <div>
-      {/* Header */}
       {webPage && (
-        <div className="grid md:grid-cols-2  text-white">
+        <div className="grid md:grid-cols-2 text-white">
           <div className="h-full flex items-center justify-center">
             {imageUrl && (
               <img
                 src={imageUrl}
                 alt={webPage.title}
-                className=" shadow-md w-full h-full object-cover"
+                className="shadow-md w-full h-full object-cover"
               />
             )}
           </div>
@@ -459,39 +252,152 @@ export default function WebPage() {
             <h2 className="text-3xl font-bold mb-4">{webPage.heading || webPage.title}</h2>
             <div
               className="text-sm text-gray-700"
-              dangerouslySetInnerHTML={{ __html: webPage.description || '' }}
+              dangerouslySetInnerHTML={{ __html: webPage.summary || '' }}
             />
           </div>
         </div>
       )}
-
-      {/* Main Content */}
       <div className="flex flex-col md:flex-row container mx-auto px-4 py-12 gap-6">
         <div className="w-full md:w-1/4">
           {loading ? (
             <div className="space-y-6 px-6">
-              <FiltersSkeleton />
-              <FiltersSkeleton />
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
             </div>
           ) : (
             <FilterSidebar
               filters={filters}
               selectedFilters={selectedFilters}
               onFilterChange={(type, value) => {
-                setSelectedFilters(prev => ({ ...prev, [type]: value }));
+                setSelectedFilters((prev) => ({ ...prev, [type]: value }));
+                setCurrentPage(1);
               }}
               onResetFilters={resetFilters}
             />
           )}
         </div>
 
+      
         <div className="w-full md:w-3/4">
-          <ActiveFiltersDisplay
-            selectedFilters={selectedFilters}
-            availableFilters={filters}
-            onRemove={handleRemoveFilter}
-          />
+          {isAnyFilterSelected && (
+            <div className="flex flex-wrap gap-3 mt-2 mb-4">
+              {selectedFilters.product_types.map((categoryId) => (
+                <div
+                  key={categoryId}
+                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  <span className="text-sm text-gray-800 dark:text-gray-200">
+                    {getFilterNameById("product_types", categoryId)}
+                  </span>
+                  <motion.button
+                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                    onClick={() => handleRemoveFilter("product_types", categoryId)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <IoCloseSharp />
+                  </motion.button>
+                </div>
+              ))}
+              {selectedFilters.sizes.map((sizeId) => (
+                <div
+                  key={sizeId}
+                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  <span className="text-sm text-gray-800 dark:text-gray-200">
+                    {getFilterNameById("sizes", sizeId)}
+                  </span>
+                  <motion.button
+                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                    onClick={() => handleRemoveFilter("sizes", sizeId)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <IoCloseSharp />
+                  </motion.button>
+                </div>
+              ))}
+              {selectedFilters.brands.map((id) => (
+                <div
+                  key={id}
+                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  <span className="text-sm text-gray-800 dark:text-gray-200">
+                    {getFilterNameById("brands", id)}
+                  </span>
+                  <motion.button
+                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                    onClick={() => handleRemoveFilter("brands", id)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <IoCloseSharp />
+                  </motion.button>
+                </div>
+              ))}
+              {selectedFilters.colors.map((colorId) => (
+                <div
+                  key={colorId}
+                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  <span
+                    style={{
+                      backgroundColor: getFilterNameById("colors", colorId),
+                    }}
+                    className="py-2.5 px-4 rounded-lg text-white font-bold"
+                  ></span>
+                  <motion.button
+                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                    onClick={() => handleRemoveFilter("colors", colorId)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <IoCloseSharp />
+                  </motion.button>
+                </div>
+              ))}
+              {selectedFilters.price.min !== selectedFilters.price.max &&
+                selectedFilters.price.max > -1 && (
+                  <div className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600">
+                    <span className="text-sm text-gray-800 dark:text-gray-200">{`£${selectedFilters.price.min} - £${selectedFilters.price.max}`}</span>
+                    <button
+                      className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300"
+                      onClick={() =>
+                        handleRemoveFilter("price", {
+                          min: 0,
+                          max: -1,
+                        })
+                      }
+                    >
+                      <IoCloseSharp />
+                    </button>
+                  </div>
+                )}
+              <Button
+                onClick={resetFilters}
+                size="sm"
+                variant={"secondary"}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          )}
 
+          {/* Product Grid */}
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
@@ -500,17 +406,43 @@ export default function WebPage() {
             </div>
           ) : products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map(product => (
-                <ProductCard key={product.id} {...product} />
+              {products.map((product) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <ProductCard
+                    id={product.id}
+                    slug={product.slug}
+                    name={product.name}
+                    price={product.price}
+                    sale_price={product.sale_price}
+                    default_image={product.default_image}
+                    brand={product.brand}
+                    images={product.images}
+                    is_favourite={product.is_favourite}
+                  />
+                </motion.div>
               ))}
             </div>
           ) : (
             <div className="text-center py-10">
-              <p>No products found matching your tags.</p>
+              <p>No products found matching your filters.</p>
             </div>
           )}
         </div>
       </div>
+           {webPage?.description && (
+        <div className="bg-gray-50 py-12">
+          <div className="max-w-7xl mx-auto px-4">
+            <div 
+              className="prose max-w-none mx-auto"
+              dangerouslySetInnerHTML={{ __html: webPage.description }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
