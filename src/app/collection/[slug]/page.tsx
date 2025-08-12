@@ -37,6 +37,7 @@ type CollectionType = {
   id: number;
   name: string;
   description: string;
+  summary: string;
   heading: string;
   image: string | null;
   listing_options: {
@@ -140,7 +141,7 @@ export default function CollectionPage() {
       }
 
       const res = await axios.get<ApiResponse>(`${apiBaseUrl}collection/${slug}`, { params });
-      
+
       if (res.data.success) {
         setCollection(res.data.data.collection);
         setProducts(res.data.data.products);
@@ -175,7 +176,7 @@ export default function CollectionPage() {
   };
 
   const debouncedFetchCollection = debounce(fetchCollection, 300);
-  
+
   useEffect(() => {
     if (slug) {
       debouncedFetchCollection();
@@ -267,7 +268,7 @@ export default function CollectionPage() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-screen">
       {/* Header Section */}
       {collection && (
         <div className="grid md:grid-cols-2 text-white">
@@ -284,7 +285,7 @@ export default function CollectionPage() {
             <h2 className="text-3xl font-bold mb-4">{collection.heading || collection.name}</h2>
             <div
               className="text-sm text-gray-700"
-              dangerouslySetInnerHTML={{ __html: collection.description || '' }}
+              dangerouslySetInnerHTML={{ __html: collection.summary || '' }}  
             />
           </div>
         </div>
@@ -301,6 +302,7 @@ export default function CollectionPage() {
           </div>
         ) : (
           <>
+
             {/* Filter Sidebar */}
             {!collection.listing_options?.hide_filters && (
               <div className="w-full md:w-1/4">
@@ -457,10 +459,24 @@ export default function CollectionPage() {
                   </motion.div>
                 ))}
               </div>
-            </div>
+              
+          </div>
+             
           </>
         )}
+      
       </div>
+        {collection.description && (
+              <div className="mt-16 mb-8">
+                <div className="max-w-7xl mx-auto px-4">
+                  <div 
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: collection.description }}
+                  />
+                </div>
+              </div>
+            )}
     </div>
+    
   );
 }
