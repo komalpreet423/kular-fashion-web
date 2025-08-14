@@ -5,15 +5,14 @@ import axios from 'axios';
 import { useParams } from 'next/navigation';
 import { apiBaseUrl, apiBaseRoot } from '@/config';
 import ProductCard from '@/components/product/card';
-import { ProductBase } from '@/types/product';
 import { Skeleton } from '@/components/ui/skeleton';
-import { IoCloseSharp } from 'react-icons/io5';
 import { motion } from 'framer-motion';
 import FilterSidebar from '@/components/product/filter-sidebar';
 import { Button } from '@/components/ui/button';
+import { IoCloseSharp } from 'react-icons/io5';
 import { debounce } from 'lodash';
 
-interface WebPage {
+interface WebPageType {
   id: number;
   title: string;
   slug: string;
@@ -29,20 +28,25 @@ interface WebPage {
   }>;
 }
 
-interface Filter {
-  product_types: { id: string; name: string }[];
-  sizes: { id: string; name: string }[];
-  colors: { id: string; color_code: string }[];
-  price: { min: number; max: number };
-  brands: { id: string; name: string }[];
+interface ProductBase {
+  id: number;
+  slug: string;
+  name: string;
+  price: number;
+  sale_price?: number;
+  default_image?: string;
+  brand?: { id: number; name: string; slug: string };
+  images?: { path: string }[];
+  is_favourite?: boolean;
 }
 
-interface SelectedFilters {
-  product_types: string[];
-  sizes: string[];
-  colors: string[];
-  brands: string[];
+interface FilterType {
   price: { min: number; max: number };
+  brands: Record<string, { id: number; name: string; slug: string }>;
+  sizes: Record<string, { id: number; size: string; name: string }>;
+  colors: Record<string, { id: number; name: string; hex: string }>;
+  product_types: Record<string, { id: number; name: string; slug: string }>;
+  tags: Record<string, { id: number; name: string | null; slug: string | null }>;
 }
 
 const ProductCardSkeleton = () => (
@@ -58,24 +62,28 @@ const ProductCardSkeleton = () => (
 
 export default function WebPage() {
   const { slug } = useParams() as { slug: string };
-  const [webPage, setWebPage] = useState<WebPage | null>(null);
+  const [webPage, setWebPage] = useState<WebPageType | null>(null);
   const [products, setProducts] = useState<ProductBase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage] = useState(12);
-  const [filters, setFilters] = useState({
-    product_types: [] as { id: string; name: string }[],
-    sizes: [] as { id: string; name: string }[],
-    colors: [] as { id: string; color_code: string }[],
-    brands: [] as { id: string; name: string }[],
+
+  // Filters
+  const [filters, setFilters] = useState<FilterType>({
     price: { min: 0, max: 0 },
+    brands: {},
+    sizes: {},
+    colors: {},
+    product_types: {},
+    tags: {},
   });
-  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
-    product_types: [],
-    sizes: [],
-    colors: [],
-    brands: [],
+
+  const [selectedFilters, setSelectedFilters] = useState({
+    product_types: [] as string[],
+    sizes: [] as string[],
+    colors: [] as string[],
+    brands: [] as string[],
     price: { min: 0, max: -1 },
   });
 
@@ -100,7 +108,7 @@ export default function WebPage() {
         filters: 'true',
       };
 
-      // Add filter params if they exist
+      // Apply filters
       if (selectedFilters.product_types.length > 0) {
         params.product_types = selectedFilters.product_types.join(',');
       }
@@ -121,45 +129,47 @@ export default function WebPage() {
       }
 
       const pageRes = await axios.get(`${apiBaseUrl}web-pages/${slug}`, { params });
-      if (!pageRes.data.success) throw new Error("Page not found");
-
-      const filtersRes = await axios.get(`${apiBaseUrl}products`, {
-        params: { filters: true },
-      });
-
-      const brandsRes = await axios.get(`${apiBaseUrl}brands`);
+      if (!pageRes.data.success) throw new Error('Page not found');
 
       setWebPage(pageRes.data.data.page);
       setProducts(pageRes.data.data.products || []);
-      setFilters({
-        product_types: filtersRes.data.filters?.product_types?.data?.map((type: any) => ({
-          id: type.id.toString(),
-          name: type.name
-        })) || [],
-        sizes: filtersRes.data.filters?.sizes?.data?.map((size: any) => ({
-          id: size.id.toString(),
-          name: size.name
-        })) || [],
-        colors: filtersRes.data.filters?.colors?.map((color: any) => ({
-          id: color.id.toString(),
-          color_code: color.hex || color.color_code
-        })) || [],
-        brands: brandsRes.data?.data?.map((brand: any) => ({
-          id: brand.id.toString(),
-          name: brand.name
-        })) || [],
-        price: filtersRes.data.filters?.price || { min: 0, max: 0 },
-      });
+
+      if (pageRes.data.data.filters) {
+        const apiFilters = pageRes.data.data.filters;
+        setFilters({
+          price: apiFilters.price || { min: 0, max: 0 },
+          brands: apiFilters.brands || {},
+          sizes: apiFilters.sizes || {},
+          colors: apiFilters.colors || {},
+          product_types: apiFilters.product_types || {},
+          tags: apiFilters.tags || {},
+        });
+
+        // Initialize price range in selected filters
+        if (apiFilters.price) {
+          setSelectedFilters(prev => ({
+            ...prev,
+            price: {
+              min: apiFilters.price.min,
+              max: apiFilters.price.max,
+            },
+          }));
+        }
+      }
 
       setError(null);
-    } catch (err: any) {
+    } catch (err) {
       setError('Failed to load page');
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const debouncedFetchData = debounce(fetchData, 300);
+  const debouncedFetchData = useMemo(
+    () => debounce(fetchData, 300),
+    [slug, currentPage, memoizedSelectedFilters]
+  );
 
   useEffect(() => {
     if (slug) {
@@ -180,48 +190,44 @@ export default function WebPage() {
   };
 
   const handleRemoveFilter = (
-    type: keyof SelectedFilters,
-    value: string | object
+    type: keyof typeof selectedFilters,
+    value: string | { min: number; max: number }
   ) => {
-    setSelectedFilters((prev) => {
-      const currentFilter = prev[type];
-
-      if (Array.isArray(currentFilter)) {
+    setSelectedFilters(prev => {
+      if (type === 'price') {
         return {
           ...prev,
-          [type]: currentFilter.filter((item) => item !== value),
+          price: { min: filters.price.min, max: filters.price.max },
         };
-      } else if (type === "price") {
+      } else if (Array.isArray(prev[type])) {
         return {
           ...prev,
-          price: { min: 0, max: -1 },
+          [type]: (prev[type] as string[]).filter(item => item !== value),
         };
       }
-
       return prev;
     });
     setCurrentPage(1);
   };
 
   const getFilterNameById = (
-    type: "product_types" | "sizes" | "colors" | "brands",
+    type: 'product_types' | 'sizes' | 'colors' | 'brands',
     id: string
   ) => {
-    switch (type) {
-      case "product_types":
-        const productType = filters.product_types.find(
-          (cat) => cat.id.toString() === id.toString()
-        );
-        return productType?.name || id;
-      case "sizes":
-        return filters.sizes.find((size) => size.id === id)?.name || id;
-      case "colors":
-        return filters.colors.find((color) => color.id === id)?.color_code || id;
-      case "brands":
-        return filters.brands.find((brand) => brand.id === id)?.name || id;
-      default:
-        return id;
+    const filterMap = {
+      product_types: filters.product_types,
+      sizes: filters.sizes,
+      colors: filters.colors,
+      brands: filters.brands,
+    };
+
+    const filter = filterMap[type][id];
+    if (!filter) return id;
+
+    if (type === 'colors') {
+      return (filter as { hex: string }).hex;
     }
+    return (filter as { name: string }).name;
   };
 
   const isAnyFilterSelected =
@@ -229,11 +235,33 @@ export default function WebPage() {
     selectedFilters.sizes.length > 0 ||
     selectedFilters.colors.length > 0 ||
     selectedFilters.brands.length > 0 ||
-    ((selectedFilters.price.min !== filters.price.min ||
-      selectedFilters.price.max !== filters.price.max) &&
-      selectedFilters.price.max >= 0);
+    (selectedFilters.price.min !== filters.price.min ||
+      selectedFilters.price.max !== filters.price.max);
 
-  const imageUrl = webPage?.image_large ? `${apiBaseRoot}assets/images/${webPage.image_large}` : null;
+  const imageUrl = webPage?.image_large
+    ? `${apiBaseRoot}assets/images/${webPage.image_large}`
+    : null;
+
+  // Convert filter objects to arrays for the sidebar
+  const filterArrays = useMemo(() => ({
+    product_types: Object.values(filters.product_types).map(type => ({
+      id: type.id.toString(),
+      name: type.name,
+    })),
+    sizes: Object.values(filters.sizes).map(size => ({
+      id: size.id.toString(),
+      name: size.name,
+    })),
+    colors: Object.values(filters.colors).map(color => ({
+      id: color.id.toString(),
+      color_code: color.hex,
+    })),
+    brands: Object.values(filters.brands).map(brand => ({
+      id: brand.id.toString(),
+      name: brand.name,
+    })),
+    price: filters.price,
+  }), [filters]);
 
   return (
     <div>
@@ -249,7 +277,9 @@ export default function WebPage() {
             )}
           </div>
           <div className="bg-gray-100 text-black px-8 py-16">
-            <h2 className="text-3xl font-bold mb-4">{webPage.heading || webPage.title}</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              {webPage.heading || webPage.title}
+            </h2>
             <div
               className="text-sm text-gray-700"
               dangerouslySetInnerHTML={{ __html: webPage.summary || '' }}
@@ -257,147 +287,108 @@ export default function WebPage() {
           </div>
         </div>
       )}
-      <div className="flex flex-col md:flex-row container mx-auto px-4 py-12 gap-6">
-        <div className="w-full md:w-1/4">
-          {loading ? (
-            <div className="space-y-6 px-6">
-              <Skeleton className="h-6 w-1/2" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-            </div>
-          ) : (
+
+      <div className="flex flex-col md:flex-row gap-4 p-4">
+        {!error && (
+          <div className="w-full md:w-1/4">
             <FilterSidebar
-              filters={filters}
+              filters={filterArrays}
               selectedFilters={selectedFilters}
               onFilterChange={(type, value) => {
-                setSelectedFilters((prev) => ({ ...prev, [type]: value }));
+                setSelectedFilters(prev => ({ ...prev, [type]: value }));
                 setCurrentPage(1);
               }}
               onResetFilters={resetFilters}
             />
-          )}
-        </div>
+          </div>
+        )}
 
-      
         <div className="w-full md:w-3/4">
           {isAnyFilterSelected && (
             <div className="flex flex-wrap gap-3 mt-2 mb-4">
-              {selectedFilters.product_types.map((categoryId) => (
+              {selectedFilters.product_types.map(categoryId => (
                 <div
                   key={categoryId}
-                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="flex py-1.5 items-center bg-gray-200 rounded-lg px-3"
                 >
-                  <span className="text-sm text-gray-800 dark:text-gray-200">
-                    {getFilterNameById("product_types", categoryId)}
-                  </span>
+                  <span>{getFilterNameById('product_types', categoryId)}</span>
                   <motion.button
-                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
-                    onClick={() => handleRemoveFilter("product_types", categoryId)}
+                    className="ml-2 text-red-500"
+                    onClick={() => handleRemoveFilter('product_types', categoryId)}
                     whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    animate={{ opacity: 1 }}
-                    initial={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
                   >
                     <IoCloseSharp />
                   </motion.button>
                 </div>
               ))}
-              {selectedFilters.sizes.map((sizeId) => (
+              {selectedFilters.sizes.map(sizeId => (
                 <div
                   key={sizeId}
-                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="flex py-1.5 items-center bg-gray-200 rounded-lg px-3"
                 >
-                  <span className="text-sm text-gray-800 dark:text-gray-200">
-                    {getFilterNameById("sizes", sizeId)}
-                  </span>
+                  <span>{getFilterNameById('sizes', sizeId)}</span>
                   <motion.button
-                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
-                    onClick={() => handleRemoveFilter("sizes", sizeId)}
+                    className="ml-2 text-red-500"
+                    onClick={() => handleRemoveFilter('sizes', sizeId)}
                     whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    animate={{ opacity: 1 }}
-                    initial={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
                   >
                     <IoCloseSharp />
                   </motion.button>
                 </div>
               ))}
-              {selectedFilters.brands.map((id) => (
+              {selectedFilters.brands.map(id => (
                 <div
                   key={id}
-                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="flex py-1.5 items-center bg-gray-200 rounded-lg px-3"
                 >
-                  <span className="text-sm text-gray-800 dark:text-gray-200">
-                    {getFilterNameById("brands", id)}
-                  </span>
+                  <span>{getFilterNameById('brands', id)}</span>
                   <motion.button
-                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
-                    onClick={() => handleRemoveFilter("brands", id)}
+                    className="ml-2 text-red-500"
+                    onClick={() => handleRemoveFilter('brands', id)}
                     whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    animate={{ opacity: 1 }}
-                    initial={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
                   >
                     <IoCloseSharp />
                   </motion.button>
                 </div>
               ))}
-              {selectedFilters.colors.map((colorId) => (
+              {selectedFilters.colors.map(colorId => (
                 <div
                   key={colorId}
-                  className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
+                  className="flex py-1.5 items-center bg-gray-200 rounded-lg px-3"
                 >
                   <span
                     style={{
-                      backgroundColor: getFilterNameById("colors", colorId),
+                      backgroundColor: getFilterNameById('colors', colorId),
                     }}
-                    className="py-2.5 px-4 rounded-lg text-white font-bold"
-                  ></span>
+                    className="inline-block w-4 h-4 rounded-full mr-2"
+                  />
                   <motion.button
-                    className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
-                    onClick={() => handleRemoveFilter("colors", colorId)}
+                    className="text-red-500"
+                    onClick={() => handleRemoveFilter('colors', colorId)}
                     whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    animate={{ opacity: 1 }}
-                    initial={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
                   >
                     <IoCloseSharp />
                   </motion.button>
                 </div>
               ))}
-              {selectedFilters.price.min !== selectedFilters.price.max &&
-                selectedFilters.price.max > -1 && (
-                  <div className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600">
-                    <span className="text-sm text-gray-800 dark:text-gray-200">{`£${selectedFilters.price.min} - £${selectedFilters.price.max}`}</span>
-                    <button
-                      className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300"
-                      onClick={() =>
-                        handleRemoveFilter("price", {
-                          min: 0,
-                          max: -1,
-                        })
-                      }
-                    >
-                      <IoCloseSharp />
-                    </button>
-                  </div>
-                )}
-              <Button
-                onClick={resetFilters}
-                size="sm"
-                variant={"secondary"}
-              >
+              {(selectedFilters.price.min !== filters.price.min ||
+                selectedFilters.price.max !== filters.price.max) && (
+                <div className="flex py-1.5 items-center bg-gray-200 rounded-lg px-3">
+                  <span>{`£${selectedFilters.price.min} - £${selectedFilters.price.max}`}</span>
+                  <button
+                    className="ml-2 text-red-500"
+                    onClick={() => handleRemoveFilter('price', { min: 0, max: 0 })}
+                  >
+                    <IoCloseSharp />
+                  </button>
+                </div>
+              )}
+              <Button onClick={resetFilters} size="sm" variant="secondary">
                 Clear Filters
               </Button>
             </div>
           )}
 
-          {/* Product Grid */}
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
@@ -406,37 +397,33 @@ export default function WebPage() {
             </div>
           ) : products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
+              {products.map(product => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <ProductCard
-                    id={product.id}
-                    slug={product.slug}
-                    name={product.name}
-                    price={product.price}
-                    sale_price={product.sale_price}
-                    default_image={product.default_image}
-                    brand={product.brand}
-                    images={product.images}
-                    is_favourite={product.is_favourite}
-                  />
+                  <ProductCard {...product} />
                 </motion.div>
               ))}
             </div>
           ) : (
             <div className="text-center py-10">
-              <p>No products found matching your filters.</p>
+              <p>No products found.</p>
+              {isAnyFilterSelected && (
+                <Button onClick={resetFilters} className="mt-4">
+                  Clear Filters
+                </Button>
+              )}
             </div>
           )}
         </div>
       </div>
-           {webPage?.description && (
+
+      {webPage?.description && (
         <div className="bg-gray-50 py-12">
           <div className="max-w-7xl mx-auto px-4">
-            <div 
+            <div
               className="prose max-w-none mx-auto"
               dangerouslySetInnerHTML={{ __html: webPage.description }}
             />
