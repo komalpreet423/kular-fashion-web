@@ -8,11 +8,7 @@ import ProductCard from "@/components/product/card";
 import { ProductBase } from "@/types/product";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-
-interface Brand {
-  id: number;
-  name: string;
-}
+import FilterSidebar from "@/components/product/filter-sidebar";
 
 interface CategoryData {
   id: number;
@@ -34,6 +30,22 @@ interface CategoryData {
   }[];
 }
 
+interface Filters {
+  product_types: { id: string; name: string }[];
+  sizes: { id: string; name: string }[];
+  colors: { id: string; color_code: string }[];
+  brands: { id: string; name: string }[];
+  price: { min: number; max: number };
+}
+
+interface SelectedFilters {
+  product_types: string[];
+  sizes: string[];
+  colors: string[];
+  brands: string[];
+  price: { min: number; max: number };
+}
+
 const ProductCardSkeleton = () => (
   <div className="flex flex-col space-y-3">
     <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -53,41 +65,85 @@ interface PageProps {
 
 export default function CategoryPage({ params }: PageProps) {
   const { slug } = use(params);
+
   const [category, setCategory] = useState<CategoryData | null>(null);
   const [products, setProducts] = useState<ProductBase[]>([]);
+  const [filters, setFilters] = useState<Filters>({
+    product_types: [],
+    sizes: [],
+    colors: [],
+    brands: [],
+    price: { min: 0, max: 0 },
+  });
+  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
+    product_types: [],
+    sizes: [],
+    colors: [],
+    brands: [],
+    price: { min: 0, max: -1 },
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      // Fetch category details
-      const categoryRes = await axios.get(`${apiBaseUrl}category/${slug}`);
-      console.log("Category API Response:", categoryRes.data);
+      const params: Record<string, string> = { per_page: "12" };
+      if (selectedFilters.product_types.length > 0)
+        params.product_types = selectedFilters.product_types.join(",");
+      if (selectedFilters.sizes.length > 0)
+        params.sizes = selectedFilters.sizes.join(",");
+      if (selectedFilters.colors.length > 0)
+        params.colors = selectedFilters.colors.join(",");
+      if (selectedFilters.brands.length > 0)
+        params.brands = selectedFilters.brands.join(",");
+      if (selectedFilters.price.min >= 0)
+        params.min_price = selectedFilters.price.min.toString();
+      if (selectedFilters.price.max > selectedFilters.price.min)
+        params.max_price = selectedFilters.price.max.toString();
+      const categoryRes = await axios.get(`${apiBaseUrl}category/${slug}`, {
+        params,
+      });
 
       if (categoryRes.status === 404 || !categoryRes.data.success) {
         setError("Category not found");
         return;
       }
-
       const categoryData = categoryRes.data.data;
+      const apiFilters = categoryRes.data.filters || {};
+      const parsedFilters: Filters = {
+        product_types: Object.values(apiFilters.product_types || {}).map(
+          (t: any) => ({ id: t.id.toString(), name: t.name })
+        ),
+        sizes: Object.values(apiFilters.sizes || {}).map((s: any) => ({
+          id: s.id.toString(),
+          name: s.name,
+        })),
+        colors: Object.values(apiFilters.colors || {}).map((c: any) => ({
+          id: c.id.toString(),
+          color_code: c.hex,
+        })),
+        brands: Object.values(apiFilters.brands || {}).map((b: any) => ({
+          id: b.id.toString(),
+          name: b.name,
+        })),
+        price: apiFilters.price || { min: 0, max: 0 },
+      };
+
+      setFilters(parsedFilters);
       setCategory(categoryData);
-
-      // Fetch brands list
-      const brandsRes = await axios.get(`${apiBaseUrl}brands`);
-      const brandList: Brand[] = brandsRes.data.data || [];
-
-      // Map brand_id → brand object
       const categoryProducts =
-        categoryData.categories_product?.map((cp) => {
+        categoryData.categories_product?.map((cp: any) => {
           const brandObj =
-            brandList.find((b) => b.id === cp.products.brand_id) ||
-            { id: cp.products.brand_id, name: "Unknown Brand" };
+            parsedFilters.brands.find(
+              (b) => b.id === cp.products.brand_id.toString()
+            ) || {
+              id: cp.products.brand_id.toString(),
+              name: cp.products.brand_id.toString(),
+            };
 
           return {
             ...cp.products,
-            brand: brandObj, // ensures ProductCard receives brand.name
+            brand: brandObj,
           };
         }) || [];
 
@@ -113,9 +169,9 @@ export default function CategoryPage({ params }: PageProps) {
     if (slug) {
       fetchData();
     }
-  }, [slug]);
+  }, [slug, selectedFilters]);
 
-  if (loading) {
+  if (loading && !category) {
     return (
       <main className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -129,9 +185,7 @@ export default function CategoryPage({ params }: PageProps) {
   if (error || !category) {
     return notFound();
   }
-
   const imageUrl = category.image ? `${apiBaseRoot}${category.image}` : null;
-
   const renderProductGrid = () => {
     if (loading) {
       return (
@@ -178,7 +232,6 @@ export default function CategoryPage({ params }: PageProps) {
 
   return (
     <div>
-      {/* Category Header Section */}
       <div className="grid md:grid-cols-2 text-white">
         <div className="h-full flex items-center justify-center">
           {imageUrl && (
@@ -199,13 +252,27 @@ export default function CategoryPage({ params }: PageProps) {
           />
         </div>
       </div>
-
-      {/* Main Content with Products */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="w-full">{renderProductGrid()}</div>
+      <div className="flex flex-col md:flex-row gap-4 p-4">
+        <div className="w-full md:w-1/4">
+          <FilterSidebar
+            filters={filters}
+            selectedFilters={selectedFilters}
+            onFilterChange={(type, value) => {
+              setSelectedFilters((prev) => ({ ...prev, [type]: value }));
+            }}
+            onResetFilters={() =>
+              setSelectedFilters({
+                product_types: [],
+                sizes: [],
+                colors: [],
+                brands: [],
+                price: { min: filters.price.min, max: filters.price.max },
+              })
+            }
+          />
+        </div>
+        <div className="w-full md:w-3/4">{renderProductGrid()}</div>
       </div>
-
-      {/* Category Description Section */}
       {category.description && (
         <div className="bg-gray-50 py-12">
           <div className="max-w-7xl mx-auto px-4">
