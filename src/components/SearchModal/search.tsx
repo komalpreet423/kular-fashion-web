@@ -1,59 +1,41 @@
 "use client";
-
+import ProductPrice from "@/components/product/ProductPrice";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import { X } from "lucide-react";
+import axios from "axios";
 
-const staticBrands = [
-  { name: "Nike", image: "/images/brands/nike.png" },
-  { name: "Adidas", image: "/images/brands/adidas.png" },
-  { name: "Puma", image: "/images/brands/puma.png" },
-  { name: "Reebok", image: "/images/brands/reebok.png" },
-];
 
-const staticProductTypes = [
-  { name: "Shoes", image: "/images/types/shoes.png" },
-  { name: "Shirts", image: "/images/types/shirts.png" },
-  { name: "Accessories", image: "/images/types/accessories.png" },
-  { name: "Bags", image: "/images/types/bags.png" },
-];
-
-const staticProducts = Array.from({ length: 50 }, (_, i) => {
-  const brandId = i % staticBrands.length;
-  const productTypeId = i % staticProductTypes.length;
-  const allColors = ["Red", "Black", "White", "Blue", "Green", "Yellow", "Orange"];
-  const shuffled = [...allColors].sort(() => 0.5 - Math.random());
-  const colors = shuffled.slice(0, Math.floor(Math.random() * 3) + 2);
-
-  return {
-    name: `Product ${i + 1}`,
-    colors,
-    image: `/images/product${(i % 4) + 1}.jpg`,
-    brandId,
-    productTypeId,
-  };
-});
+import { apiBaseUrl } from "@/config";
 
 const ProductCard = ({
   name,
-  colors,
+  brand,
+  price,
   image,
+  slug,
   compact = false,
 }: {
   name: string;
-  colors: string[];
+  brand: string;
+  price: number;
   image: string;
+  slug: string;
   compact?: boolean;
 }) => {
   const [imgError, setImgError] = useState(false);
 
   return (
     <a
-      href="#"
-      className={`group flex flex-col items-center w-full ${compact ? "max-w-[160px]" : ""} mx-auto cursor-pointer transition-transform duration-300 hover:scale-[1.03]`}
+      href={`/product/${slug}`}
+      className={`group flex flex-col items-center w-full ${
+        compact ? "max-w-[160px]" : ""
+      } mx-auto cursor-pointer transition-transform duration-300 hover:scale-[1.03]`}
     >
       <div
-        className={`w-full ${compact ? "aspect-[4/5]" : "aspect-square"} rounded-lg overflow-hidden border shadow-sm bg-gray-100 flex items-center justify-center`}
+        className={`w-full ${
+          compact ? "aspect-[4/5]" : "aspect-square"
+        } rounded-lg overflow-hidden border shadow-sm bg-gray-100 flex items-center justify-center`}
       >
         <img
           src={imgError ? "/images/default-product.png" : image}
@@ -64,14 +46,25 @@ const ProductCard = ({
       </div>
       <div className="mt-2 text-center">
         <h3
-          className={`font-medium transition-all duration-300 group-hover:underline ${compact ? "text-sm" : "text-base"}`}
+          className={`font-medium transition-all duration-300 group-hover:underline ${
+            compact ? "text-sm" : "text-base"
+          }`}
         >
           {name}
         </h3>
         <p
-          className={`text-gray-500 transition-all duration-300 group-hover:underline ${compact ? "text-xs" : "text-sm"}`}
+          className={`text-gray-500 transition-all duration-300 ${
+            compact ? "text-xs" : "text-sm"
+          }`}
         >
-          {colors.join(", ")}
+          {brand || "No Brand"}
+        </p>
+        <p
+          className={`font-semibold text-[var(--primary)] transition-all duration-300 ${
+            compact ? "text-sm" : "text-base"
+          }`}
+        >
+          <ProductPrice basePrice={price} />
         </p>
       </div>
     </a>
@@ -81,8 +74,42 @@ const ProductCard = ({
 const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleCount, setVisibleCount] = useState(8);
-  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
-  const [selectedProductTypeId, setSelectedProductTypeId] = useState<number | null>(null);
+
+  const [products, setProducts] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+  const [colors, setColors] = useState<any[]>([]);
+  const [sizes, setSizes] = useState<any[]>([]);
+
+  const [selectedBrandId, setSelectedBrandId] = useState<string>("");
+  const [selectedColorId, setSelectedColorId] = useState<string>("");
+  const [selectedSizeId, setSelectedSizeId] = useState<string>("");
+
+  // API Fetch
+  useEffect(() => {
+    if (isOpen) {
+      fetchProducts();
+    }
+  }, [isOpen, searchTerm, selectedBrandId, selectedColorId, selectedSizeId]);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(`${apiBaseUrl}search-product`, {
+        params: {
+          searchValue: searchTerm,
+          brand_id: selectedBrandId || null,
+          color_id: selectedColorId || null,
+          size_id: selectedSizeId || null,
+        },
+      });
+
+      setProducts(response.data.products || []);
+      setBrands(response.data.brands || []);
+      setColors(response.data.colors || []);
+      setSizes(response.data.sizes || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
@@ -91,64 +118,10 @@ const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchTerm("");
-      setSelectedBrandId(null);
-      setSelectedProductTypeId(null);
-      setVisibleCount(8);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    setVisibleCount(8);
-  }, [searchTerm, selectedBrandId, selectedProductTypeId]);
-
-  const toggleBrand = (id: number) => {
-    setSelectedBrandId((prev) => (prev === id ? null : id));
-  };
-
-  const toggleProductType = (id: number) => {
-    setSelectedProductTypeId((prev) => (prev === id ? null : id));
-  };
-
-  const filteredProducts = staticProducts.filter((p) => {
-    const brandName = staticBrands[p.brandId]?.name.toLowerCase() || "";
-    const typeName = staticProductTypes[p.productTypeId]?.name.toLowerCase() || "";
-
-    const matchesSearch =
-      searchTerm.trim() === "" ||
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.colors.some((c) => c.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      brandName.includes(searchTerm.toLowerCase()) ||
-      typeName.includes(searchTerm.toLowerCase());
-
-    const matchesBrand = selectedBrandId === null || p.brandId === selectedBrandId;
-    const matchesType = selectedProductTypeId === null || p.productTypeId === selectedProductTypeId;
-
-    return matchesSearch && matchesBrand && matchesType;
-  });
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const remainingCount = filteredProducts.length - visibleCount;
-
-  const filteredBrands = [...staticBrands]
-    .map((brand, idx) => ({ ...brand, id: idx }))
-    .sort((a, b) => {
-      const aMatch = a.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const bMatch = b.name.toLowerCase().includes(searchTerm.toLowerCase());
-      return Number(bMatch) - Number(aMatch);
-    });
-
-  const filteredProductTypes = [...staticProductTypes]
-    .map((type, idx) => ({ ...type, id: idx }))
-    .sort((a, b) => {
-      const aMatch = a.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const bMatch = b.name.toLowerCase().includes(searchTerm.toLowerCase());
-      return Number(bMatch) - Number(aMatch);
-    });
-
   if (!isOpen) return null;
+
+  const visibleProducts = products.slice(0, visibleCount);
+  const remainingCount = products.length - visibleCount;
 
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-auto">
@@ -161,10 +134,13 @@ const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search..."
+                placeholder="Search products..."
                 className="w-full border border-gray-300 rounded-xl py-2.5 sm:py-3 px-5 pl-11 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               />
-              <CiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+              <CiSearch
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+                size={20}
+              />
             </div>
           </div>
           <button
@@ -177,66 +153,57 @@ const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
         {/* Main Layout */}
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="w-full md:w-[30%] space-y-10">
-            {/* Brands */}
+          {/* Sidebar Filters */}
+          <div className="w-full md:w-[30%] space-y-6">
+            {/* Brand Dropdown */}
             <div>
-              <h2 className="text-xl font-semibold mb-3">Brands</h2>
-              <div className="flex flex-wrap gap-3">
-                {filteredBrands.map((brand) => {
-                  const isSelected = selectedBrandId === brand.id;
-                  return (
-                    <div key={brand.name} className="flex flex-col items-center">
-                      <button
-                        onClick={() => toggleBrand(brand.id)}
-                        className={`p-2 border rounded-xl transition-all duration-300 flex items-center justify-center w-20 h-20 bg-white cursor-pointer hover:border-[var(--primary)] ${
-                          isSelected ? "border-[var(--primary)] bg-[var(--primary)]/10" : "border-gray-300"
-                        }`}
-                      >
-                        <img
-                          src={brand.image}
-                          alt={brand.name}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/images/default-brand.jpg";
-                          }}
-                        />
-                      </button>
-                      <span className="text-sm mt-1">{brand.name}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              <label className="block text-xl font-semibold mb-2">Brands</label>
+              <select
+                className="w-full p-2 border border-gray-300 rounded-md"
+                value={selectedBrandId}
+                onChange={(e) => setSelectedBrandId(e.target.value)}
+              >
+                <option value="">All Brands</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Product Types */}
+            {/* Color Dropdown */}
             <div>
-              <h2 className="text-xl font-semibold mb-3">Product Types</h2>
-              <div className="flex flex-wrap gap-3">
-                {filteredProductTypes.map((type) => {
-                  const isSelected = selectedProductTypeId === type.id;
-                  return (
-                    <div key={type.name} className="flex flex-col items-center">
-                      <button
-                        onClick={() => toggleProductType(type.id)}
-                        className={`p-2 border rounded-xl transition-all duration-300 flex items-center justify-center w-20 h-20 bg-white cursor-pointer hover:border-[var(--primary)] ${
-                          isSelected ? "border-[var(--primary)] bg-[var(--primary)]/10" : "border-gray-300"
-                        }`}
-                      >
-                        <img
-                          src={type.image}
-                          alt={type.name}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/images/default-brand.jpg";
-                          }}
-                        />
-                      </button>
-                      <span className="text-sm mt-1">{type.name}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              <label className="block text-xl font-semibold mb-2">Colors</label>
+              <select
+                className="w-full p-2 border border-gray-300 rounded-md"
+                value={selectedColorId}
+                onChange={(e) => setSelectedColorId(e.target.value)}
+              >
+                <option value="">All Colors</option>
+                {colors.map((color) => (
+                  <option key={color.id} value={color.id}>
+                    {color.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Size Dropdown */}
+            <div>
+              <label className="block text-xl font-semibold mb-2">Sizes</label>
+              <select
+                className="w-full p-2 border border-gray-300 rounded-md"
+                value={selectedSizeId}
+                onChange={(e) => setSelectedSizeId(e.target.value)}
+              >
+                <option value="">All Sizes</option>
+                {sizes.map((size) => (
+                  <option key={size.id} value={size.id}>
+                    {size.size}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -246,12 +213,14 @@ const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
             {visibleProducts.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {visibleProducts.map((product, idx) => (
+                  {visibleProducts.map((product) => (
                     <ProductCard
-                      key={idx}
+                      key={product.id}
                       name={product.name}
-                      colors={product.colors}
-                      image={product.image}
+                      brand={product.brand?.name}
+                      price={product.price}
+                      slug={product.slug}
+                      image={product.image || "/images/default-product.png"}
                     />
                   ))}
                 </div>
@@ -267,7 +236,9 @@ const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
                 )}
               </>
             ) : (
-              <div className="text-gray-500 text-center mt-10 text-lg">No Product Available</div>
+              <div className="text-gray-500 text-center mt-10 text-lg">
+                No Product Available
+              </div>
             )}
           </div>
         </div>
