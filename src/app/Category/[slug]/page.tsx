@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { use, useEffect, useState, useMemo } from "react";
 import axios from "axios";
@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import FilterSidebar from "@/components/product/filter-sidebar";
 import { Button } from "@/components/ui/button";
-import { IoCloseSharp } from "react-icons/io5";
+import { IoCloseSharp, IoChevronBack, IoChevronForward } from "react-icons/io5";
 import { debounce } from "lodash";
 
 interface CategoryData {
@@ -80,6 +80,136 @@ const ProductCardSkeleton = () => (
     </div>
   </div>
 );
+
+// Custom Pagination Component with Dark Blue Theme
+const PaginationComponent = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  const maxVisiblePages = 5;
+  
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  // Previous button
+  pages.push(
+    <button
+      key="prev"
+      onClick={() => onPageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className={`flex items-center justify-center px-3 h-10 ms-0 leading-tight border border-gray-300 rounded-s-lg
+        ${currentPage === 1 
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700' 
+          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+    >
+      <IoChevronBack className="w-4 h-4" />
+      <span className="sr-only">Previous</span>
+    </button>
+  );
+
+  // First page and ellipsis if needed
+  if (startPage > 1) {
+    pages.push(
+      <button
+        key={1}
+        onClick={() => onPageChange(1)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${1 === currentPage 
+            ? 'bg-blue-800 text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
+            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+      >
+        1
+      </button>
+    );
+    
+    if (startPage > 2) {
+      pages.push(
+        <span key="ellipsis1" className="flex items-center justify-center px-2 h-10 leading-tight text-gray-500 dark:text-gray-400">
+          ...
+        </span>
+      );
+    }
+  }
+
+  // Page numbers
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(
+      <button
+        key={i}
+        onClick={() => onPageChange(i)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${i === currentPage 
+            ? 'bg-black text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
+            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+      >
+        {i}
+      </button>
+    );
+  }
+
+  // Last page and ellipsis if needed
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      pages.push(
+        <span key="ellipsis2" className="flex items-center justify-center px-2 h-10 leading-tight text-gray-500 dark:text-gray-400">
+          ...
+        </span>
+      );
+    }
+    
+    pages.push(
+      <button
+        key={totalPages}
+        onClick={() => onPageChange(totalPages)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${totalPages === currentPage 
+            ? 'bg-blue-800 text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
+            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+      >
+        {totalPages}
+      </button>
+    );
+  }
+
+  // Next button
+  pages.push(
+    <button
+      key="next"
+      onClick={() => onPageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className={`flex items-center justify-center px-3 h-10 leading-tight border border-gray-300 rounded-e-lg
+        ${currentPage === totalPages 
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700' 
+          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+    >
+      <IoChevronForward className="w-4 h-4" />
+      <span className="sr-only">Next</span>
+    </button>
+  );
+
+  return (
+    <div className="flex flex-col items-center mt-8">
+      <div className="flex text-base">
+        {pages}
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+        Showing page {currentPage} of {totalPages}
+      </p>
+    </div>
+  );
+};
 
 interface PageProps {
   params: Promise<{
@@ -304,7 +434,7 @@ export default function CategoryPage({ params }: PageProps) {
   const renderProductGrid = () => {
     if (loading) {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[600px]">
           {[...Array(6)].map((_, i) => (
             <ProductCardSkeleton key={i} />
           ))}
@@ -315,7 +445,7 @@ export default function CategoryPage({ params }: PageProps) {
     if (products.length > 0) {
       return (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[1300px]">
             {products.map((product, index) => (
               <motion.div
                 key={`product-${product.id}-${index}`}
@@ -339,30 +469,17 @@ export default function CategoryPage({ params }: PageProps) {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8">
-              <div className="flex space-x-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded ${currentPage === page
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <PaginationComponent
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </>
       );
     }
 
     return (
-      <div className="text-center py-10">
+      <div className="text-center py-10 min-h-[600px] flex flex-col justify-center">
         <p className="text-gray-600">No products found in this category.</p>
         {isAnyFilterSelected && (
           <Button onClick={resetFilters} className="mt-4">
