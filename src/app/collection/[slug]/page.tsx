@@ -8,14 +8,8 @@ import ProductCard from '@/components/product/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import FilterSidebar from '@/components/product/filter-sidebar';
 import { Button } from '@/components/ui/button';
-import { IoCloseSharp } from 'react-icons/io5';
+import { IoCloseSharp, IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import { motion } from 'framer-motion';
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { debounce } from 'lodash';
 
 type ProductBase = {
@@ -56,6 +50,7 @@ type ApiResponse = {
     pagination: {
       total: number;
       current_page: number;
+      per_page: number;
       total_pages: number;
     };
     filters: {
@@ -76,6 +71,136 @@ interface SelectedFilters {
   price: { min: number; max: number };
 }
 
+// Custom Pagination Component
+const PaginationComponent = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  const maxVisiblePages = 5;
+  
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  // Previous button
+  pages.push(
+    <button
+      key="prev"
+      onClick={() => onPageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className={`flex items-center justify-center px-3 h-10 ms-0 leading-tight border border-gray-300 rounded-s-lg
+        ${currentPage === 1 
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+          : 'bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}
+    >
+      <IoChevronBack className="w-4 h-4" />
+      <span className="sr-only">Previous</span>
+    </button>
+  );
+
+  // First page and ellipsis if needed
+  if (startPage > 1) {
+    pages.push(
+      <button
+        key={1}
+        onClick={() => onPageChange(1)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${1 === currentPage 
+            ? 'bg-blue-600 text-white border-blue-600' 
+            : 'bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}
+      >
+        1
+      </button>
+    );
+    
+    if (startPage > 2) {
+      pages.push(
+        <span key="ellipsis1" className="flex items-center justify-center px-2 h-10 leading-tight">
+          ...
+        </span>
+      );
+    }
+  }
+
+  // Page numbers
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(
+      <button
+        key={i}
+        onClick={() => onPageChange(i)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${i === currentPage 
+            ? 'bg-black text-white border-blue-600' 
+            : 'bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}
+      >
+        {i}
+      </button>
+    );
+  }
+
+  // Last page and ellipsis if needed
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      pages.push(
+        <span key="ellipsis2" className="flex items-center justify-center px-2 h-10 leading-tight">
+          ...
+        </span>
+      );
+    }
+    
+    pages.push(
+      <button
+        key={totalPages}
+        onClick={() => onPageChange(totalPages)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${totalPages === currentPage 
+            ? 'bg-blue-600 text-white border-blue-600' 
+            : 'bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}
+      >
+        {totalPages}
+      </button>
+    );
+  }
+
+  // Next button
+  pages.push(
+    <button
+      key="next"
+      onClick={() => onPageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className={`flex items-center justify-center px-3 h-10 leading-tight border border-gray-300 rounded-e-lg
+        ${currentPage === totalPages 
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+          : 'bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}
+    >
+      <IoChevronForward className="w-4 h-4" />
+      <span className="sr-only">Next</span>
+    </button>
+  );
+
+  return (
+    <div className="flex flex-col items-center mt-8">
+      <div className="flex text-base">
+        {pages}
+      </div>
+      <p className="text-sm text-gray-600 mt-2">
+        Showing page {currentPage} of {totalPages}
+      </p>
+    </div>
+  );
+};
+
 export default function CollectionPage() {
   const { slug } = useParams();
   const [collection, setCollection] = useState<CollectionType | null>(null);
@@ -83,7 +208,12 @@ export default function CollectionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage] = useState(12);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    current_page: 1,
+    per_page: 12,
+    total_pages: 0,
+  });
   const [filters, setFilters] = useState({
     product_types: [] as { id: string; name: string }[],
     sizes: [] as { id: string; name: string }[],
@@ -115,7 +245,7 @@ export default function CollectionPage() {
     try {
       setLoading(true);
       const params: Record<string, string> = {
-        per_page: perPage.toString(),
+        per_page: pagination.per_page.toString(),
         page: currentPage.toString(),
         filters: 'true',
       };
@@ -145,6 +275,7 @@ export default function CollectionPage() {
       if (res.data.success) {
         setCollection(res.data.data.collection);
         setProducts(res.data.data.products);
+        setPagination(res.data.data.pagination);
 
         // Set filters from API response
         const apiFilters = res.data.data.filters;
@@ -438,7 +569,7 @@ export default function CollectionPage() {
               )}
 
               {/* Product Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
                 {products.map((product) => (
                   <motion.div
                     key={product.id}
@@ -460,23 +591,27 @@ export default function CollectionPage() {
                 ))}
               </div>
               
-          </div>
-             
+              {/* Pagination */}
+              <PaginationComponent
+                currentPage={pagination.current_page}
+                totalPages={pagination.total_pages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
           </>
         )}
-      
       </div>
-        {collection.description && (
-              <div className="mt-16 mb-8">
-                <div className="max-w-7xl mx-auto px-4">
-                  <div 
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: collection.description }}
-                  />
-                </div>
-              </div>
-            )}
+      
+      {collection.description && (
+        <div className="mt-16 mb-8">
+          <div className="max-w-7xl mx-auto px-4">
+            <div 
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: collection.description }}
+            />
+          </div>
+        </div>
+      )}
     </div>
-    
   );
 }
