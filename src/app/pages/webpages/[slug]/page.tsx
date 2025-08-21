@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 import { apiBaseUrl, apiBaseRoot } from '@/config';
@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import FilterSidebar from '@/components/product/filter-sidebar';
 import { Button } from '@/components/ui/button';
-import { IoCloseSharp } from 'react-icons/io5';
+import { IoCloseSharp, IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import { debounce } from 'lodash';
 
 interface WebPageType {
@@ -49,6 +49,136 @@ interface FilterType {
   tags: Record<string, { id: number; name: string | null; slug: string | null }>;
 }
 
+// Custom Pagination Component with Dark Blue Theme
+const PaginationComponent = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  const maxVisiblePages = 5;
+  
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  // Previous button
+  pages.push(
+    <button
+      key="prev"
+      onClick={() => onPageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className={`flex items-center justify-center px-3 h-10 ms-0 leading-tight border border-gray-300 rounded-s-lg
+        ${currentPage === 1 
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700' 
+          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+    >
+      <IoChevronBack className="w-4 h-4" />
+      <span className="sr-only">Previous</span>
+    </button>
+  );
+
+  // First page and ellipsis if needed
+  if (startPage > 1) {
+    pages.push(
+      <button
+        key={1}
+        onClick={() => onPageChange(1)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${1 === currentPage 
+            ? 'bg-blue-800 text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
+            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+      >
+        1
+      </button>
+    );
+    
+    if (startPage > 2) {
+      pages.push(
+        <span key="ellipsis1" className="flex items-center justify-center px-2 h-10 leading-tight text-gray-500 dark:text-gray-400">
+          ...
+        </span>
+      );
+    }
+  }
+
+  // Page numbers
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(
+      <button
+        key={i}
+        onClick={() => onPageChange(i)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${i === currentPage 
+            ? 'bg-black text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
+            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+      >
+        {i}
+      </button>
+    );
+  }
+
+  // Last page and ellipsis if needed
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      pages.push(
+        <span key="ellipsis2" className="flex items-center justify-center px-2 h-10 leading-tight text-gray-500 dark:text-gray-400">
+          ...
+        </span>
+      );
+    }
+    
+    pages.push(
+      <button
+        key={totalPages}
+        onClick={() => onPageChange(totalPages)}
+        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
+          ${totalPages === currentPage 
+            ? 'bg-blue-800 text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
+            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+      >
+        {totalPages}
+      </button>
+    );
+  }
+
+  // Next button
+  pages.push(
+    <button
+      key="next"
+      onClick={() => onPageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className={`flex items-center justify-center px-3 h-10 leading-tight border border-gray-300 rounded-e-lg
+        ${currentPage === totalPages 
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700' 
+          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+    >
+      <IoChevronForward className="w-4 h-4" />
+      <span className="sr-only">Next</span>
+    </button>
+  );
+
+  return (
+    <div className="flex flex-col items-center mt-8">
+      <div className="flex text-base">
+        {pages}
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+        Showing page {currentPage} of {totalPages}
+      </p>
+    </div>
+  );
+};
+
 const ProductCardSkeleton = () => (
   <div className="flex flex-col space-y-3">
     <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -67,6 +197,7 @@ export default function WebPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [perPage] = useState(12);
 
   // Filters
@@ -87,19 +218,13 @@ export default function WebPage() {
     price: { min: 0, max: -1 },
   });
 
-  const memoizedSelectedFilters = useMemo(
-    () => selectedFilters,
-    [
-      JSON.stringify(selectedFilters.product_types),
-      JSON.stringify(selectedFilters.sizes),
-      JSON.stringify(selectedFilters.colors),
-      JSON.stringify(selectedFilters.brands),
-      selectedFilters.price.min,
-      selectedFilters.price.max,
-    ]
-  );
+  // Create a ref to track the latest selected filters
+  const selectedFiltersRef = useRef(selectedFilters);
+  useEffect(() => {
+    selectedFiltersRef.current = selectedFilters;
+  }, [selectedFilters]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const params: Record<string, string> = {
@@ -108,24 +233,27 @@ export default function WebPage() {
         filters: 'true',
       };
 
+      // Use the ref to get the latest filter values
+      const currentFilters = selectedFiltersRef.current;
+
       // Apply filters
-      if (selectedFilters.product_types.length > 0) {
-        params.product_types = selectedFilters.product_types.join(',');
+      if (currentFilters.product_types.length > 0) {
+        params.product_types = currentFilters.product_types.join(',');
       }
-      if (selectedFilters.sizes.length > 0) {
-        params.sizes = selectedFilters.sizes.join(',');
+      if (currentFilters.sizes.length > 0) {
+        params.sizes = currentFilters.sizes.join(',');
       }
-      if (selectedFilters.colors.length > 0) {
-        params.colors = selectedFilters.colors.join(',');
+      if (currentFilters.colors.length > 0) {
+        params.colors = currentFilters.colors.join(',');
       }
-      if (selectedFilters.brands.length > 0) {
-        params.brands = selectedFilters.brands.join(',');
+      if (currentFilters.brands.length > 0) {
+        params.brands = currentFilters.brands.join(',');
       }
-      if (selectedFilters.price.min >= 0) {
-        params.min_price = selectedFilters.price.min.toString();
+      if (currentFilters.price.min >= 0) {
+        params.min_price = currentFilters.price.min.toString();
       }
-      if (selectedFilters.price.max > selectedFilters.price.min) {
-        params.max_price = selectedFilters.price.max.toString();
+      if (currentFilters.price.max > currentFilters.price.min) {
+        params.max_price = currentFilters.price.max.toString();
       }
 
       const pageRes = await axios.get(`${apiBaseUrl}web-pages/${slug}`, { params });
@@ -133,6 +261,15 @@ export default function WebPage() {
 
       setWebPage(pageRes.data.data.page);
       setProducts(pageRes.data.data.products || []);
+      
+      // Set total pages for pagination
+      if (pageRes.data.data.pagination) {
+        setTotalPages(pageRes.data.data.pagination.last_page || 1);
+      } else {
+        // Fallback if pagination data is not available
+        const productCount = pageRes.data.data.products?.length || 0;
+        setTotalPages(Math.ceil(productCount / perPage) || 1);
+      }
 
       if (pageRes.data.data.filters) {
         const apiFilters = pageRes.data.data.filters;
@@ -164,19 +301,31 @@ export default function WebPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug, currentPage, perPage]);
 
+  // Create a debounced version of fetchData
   const debouncedFetchData = useMemo(
     () => debounce(fetchData, 300),
-    [slug, currentPage, memoizedSelectedFilters]
+    [fetchData]
   );
 
+  // Effect for initial load and filter changes
   useEffect(() => {
     if (slug) {
       debouncedFetchData();
     }
-    return () => debouncedFetchData.cancel();
-  }, [slug, currentPage, memoizedSelectedFilters]);
+    
+    return () => {
+      debouncedFetchData.cancel();
+    };
+  }, [slug, debouncedFetchData]);
+
+  // Effect for page changes only
+  useEffect(() => {
+    if (slug) {
+      fetchData();
+    }
+  }, [currentPage, fetchData, slug]);
 
   const resetFilters = () => {
     setSelectedFilters({
@@ -262,7 +411,6 @@ export default function WebPage() {
     })),
     price: filters.price,
   }), [filters]);
-
   return (
     <div>
       {webPage && (
@@ -396,17 +544,26 @@ export default function WebPage() {
               ))}
             </div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map(product => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <ProductCard {...product} />
-                </motion.div>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map(product => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <ProductCard {...product} />
+                  </motion.div>
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              <PaginationComponent
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </>
           ) : (
             <div className="text-center py-10">
               <p>No products found.</p>
