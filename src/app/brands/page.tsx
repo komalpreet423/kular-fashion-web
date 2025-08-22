@@ -57,7 +57,7 @@ export default function BrandsPage() {
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-4">All Brands</h1>
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           {Array.from({ length: perPage }).map((_, i) => (
             <div key={i} className="flex flex-col space-y-3">
               <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -69,7 +69,7 @@ export default function BrandsPage() {
         <p className="text-center text-gray-500">No brands found.</p>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 grid-cols-6 gap-6">
             {brands.map((brand) => (
               <BrandCard key={brand.id} brand={brand} />
             ))}

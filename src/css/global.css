@@ -147,3 +147,6 @@
 nav.hidden.md\:flex.space-x-4.w-full.justify-center.items-center.relative {
     text-transform: uppercase;
 }
+.grid-cols-6.gap-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
