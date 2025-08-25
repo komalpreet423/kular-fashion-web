@@ -90,15 +90,6 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // Fetch brands separately since they might not change often
-      let brandData = { data: [] };
-      try {
-        const brandResponse = await axios.get(`${apiBaseUrl}brands`);
-        brandData = brandResponse.data;
-      } catch (brandError) {
-        console.error("Failed to fetch brands", brandError);
-      }
-
       // Build params object
       const params: Record<string, string> = {
         per_page: perPage.toString(),
@@ -125,31 +116,24 @@ export default function ProductsPage() {
         params.max_price = selectedFilters.price.max.toString();
       }
 
-      // Always request filters data
-      params.filters = "true";
-
       const response = await axios.get(`${apiBaseUrl}products`, { params });
       const data = response.data;
 
-      const productTypesMap = new Map();
-      data.data.forEach((product: any) => {
-        if (product.productType) {
-          productTypesMap.set(product.productType.id, {
-            id: product.productType.id,
-            name: product.productType.name
-          });
-        }
-      });
+      // Extract filters from API response correctly - handle object structure for colors and sizes
+      const apiFilters = data.filters || {};
       
-      const productTypes = Array.from(productTypesMap.values());
+      // Convert object with numeric keys to array for colors and sizes
+      const colorsArray = apiFilters.colors ? Object.values(apiFilters.colors) : [];
+      const sizesArray = apiFilters.sizes ? Object.values(apiFilters.sizes) : [];
+      
       const tempFilters = {
-        product_types: productTypes,
-        sizes: data.filters?.sizes?.data || [],
-        colors: data.filters?.colors || [],
-        brands: brandData.data || [],
+        product_types: Array.isArray(apiFilters.product_types) ? apiFilters.product_types : [],
+        sizes: sizesArray,
+        colors: colorsArray,
+        brands: Array.isArray(apiFilters.brands) ? apiFilters.brands : [],
         price: {
-          min: data.filters?.price?.min || 0,
-          max: data.filters?.price?.max || 0
+          min: apiFilters.price?.min || 0,
+          max: apiFilters.price?.max || 0
         },
       };
 
@@ -242,18 +226,29 @@ export default function ProductsPage() {
     type: "product_types" | "sizes" | "colors" | "brands",
     id: string
   ) => {
+    const filterArray = filters[type] || [];
+    
     switch (type) {
       case "product_types":
-        const productType = filters.product_types.find(
-          (cat) => cat.id.toString() === id.toString()
+        const productType = filterArray.find(
+          (cat: any) => cat.id && cat.id.toString() === id.toString()
         );
         return productType?.name || id;
       case "sizes":
-        return filters.sizes.find((size) => size.id === id)?.name || id;
+        const size = filterArray.find(
+          (size: any) => size.id && size.id.toString() === id.toString()
+        );
+        return size?.name || size?.size || id;
       case "colors":
-        return filters.colors.find((color) => color.id === id)?.color_code || id;
+        const color = filterArray.find(
+          (color: any) => color.id && color.id.toString() === id.toString()
+        );
+        return color?.name || color?.color_name || id;
       case "brands":
-        return filters.brands.find((brand) => brand.id === id)?.name || id;
+        const brand = filterArray.find(
+          (brand: any) => brand.id && brand.id.toString() === id.toString()
+        );
+        return brand?.name || id;
       default:
         return id;
     }
@@ -423,35 +418,38 @@ export default function ProductsPage() {
                           </motion.button>
                         </div>
                       ))}
-                      {selectedFilters.colors.map((colorId) => (
-                        <div
-                          key={colorId}
-                          className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
-                        >
-                          <span
-                            style={{
-                              backgroundColor: getFilterNameById(
-                                "colors",
-                                colorId
-                              ),
-                            }}
-                            className="py-2.5 px-4 rounded-lg text-white font-bold"
-                          ></span>
-                          <motion.button
-                            className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
-                            onClick={() =>
-                              handleRemoveFilter("colors", colorId)
-                            }
-                            whileHover={{ scale: 1.2 }}
-                            whileTap={{ scale: 0.9 }}
-                            animate={{ opacity: 1 }}
-                            initial={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
+                      {selectedFilters.colors.map((colorId) => {
+                        const color = filters.colors.find((c: any) => c.id && c.id.toString() === colorId.toString());
+                        return (
+                          <div
+                            key={colorId}
+                            className="flex py-1.5 items-center bg-gray-200 dark:bg-gray-700 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600"
                           >
-                            <IoCloseSharp />
-                          </motion.button>
-                        </div>
-                      ))}
+                            <span
+                              style={{
+                                backgroundColor: color?.color_code || '#ccc',
+                              }}
+                              className="w-4 h-4 rounded-full mr-2 border border-gray-300"
+                            ></span>
+                            <span className="text-sm text-gray-800 dark:text-gray-200">
+                              {getFilterNameById("colors", colorId)}
+                            </span>
+                            <motion.button
+                              className="ml-2 text-red-500 cursor-pointer hover:text-red-600 hover:bg-red-100 rounded-lg transition duration-300"
+                              onClick={() =>
+                                handleRemoveFilter("colors", colorId)
+                              }
+                              whileHover={{ scale: 1.2 }}
+                              whileTap={{ scale: 0.9 }}
+                              animate={{ opacity: 1 }}
+                              initial={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <IoCloseSharp />
+                            </motion.button>
+                          </div>
+                        );
+                      })}
                       {selectedFilters.price.min !==
                         selectedFilters.price.max &&
                         selectedFilters.price.max > -1 && (
