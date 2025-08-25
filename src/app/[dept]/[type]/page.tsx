@@ -30,6 +30,13 @@ interface SelectedFilters {
   brands: string[];
 }
 
+interface PaginationProps {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
 const FiltersSkeleton = () => (
   <div className="space-y-4">
     <Skeleton className="h-6 w-1/2" />
@@ -71,7 +78,7 @@ export default function ProductTypePage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage] = useState(12);
-  const [totalPages, setTotalPages] = useState(1);
+  const [pagination, setPagination] = useState<PaginationProps | null>(null);
 
   const memoizedSelectedFilters = useMemo(
     () => selectedFilters,
@@ -119,7 +126,7 @@ export default function ProductTypePage() {
 
         if (response.data?.success) {
           setProducts(response.data.data || []);
-          setTotalPages(response.data.pagination?.last_page || 1);
+          setPagination(response.data.pagination || null);
 
           const apiFilters = response.data.filters || {};
           setFilters({
@@ -391,38 +398,90 @@ export default function ProductTypePage() {
               ))}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex">
-                <Pagination className="mt-4">
+            {/* Pagination - Updated to match first example */}
+            {pagination && pagination.last_page > 1 && (
+              <div className="flex justify-center mt-6">
+                <Pagination>
                   <PaginationContent>
+                    {/* Previous Button */}
                     <PaginationItem>
                       <button
-                        className="px-3 py-1 cursor-pointer rounded-md disabled:opacity-50"
+                        className="px-3 py-1 rounded-md disabled:opacity-50"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage((prev) => prev - 1)}
                       >
                         Previous
                       </button>
                     </PaginationItem>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <PaginationItem key={index}>
+
+                    {/* First Page */}
+                    {currentPage > 3 && (
+                      <PaginationItem>
                         <button
-                          className={`px-3 py-1 cursor-pointer rounded-md ${
-                            currentPage === index + 1
-                              ? "bg-gray-900 text-white"
-                              : "bg-gray-200"
-                          }`}
-                          onClick={() => setCurrentPage(index + 1)}
+                          className={`px-3 py-1 rounded-md ${currentPage === 1 ? "bg-gray-900 text-white" : "bg-gray-200"}`}
+                          onClick={() => setCurrentPage(1)}
                         >
-                          {index + 1}
+                          1
                         </button>
                       </PaginationItem>
-                    ))}
+                    )}
+
+                    {/* Ellipsis before current page if needed */}
+                    {currentPage > 4 && (
+                      <PaginationItem>
+                        <span className="px-3 py-1">...</span>
+                      </PaginationItem>
+                    )}
+
+                    {/* Pages around current page */}
+                    {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
+                      let pageNum;
+                      if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= pagination.last_page - 2) {
+                        pageNum = pagination.last_page - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      if (pageNum < 1 || pageNum > pagination.last_page) return null;
+
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <button
+                            className={`px-3 py-1 rounded-md ${currentPage === pageNum ? "bg-gray-900 text-white" : "bg-gray-200"}`}
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        </PaginationItem>
+                      );
+                    })}
+
+                    {/* Ellipsis after current page if needed */}
+                    {currentPage < pagination.last_page - 3 && (
+                      <PaginationItem>
+                        <span className="px-3 py-1">...</span>
+                      </PaginationItem>
+                    )}
+
+                    {/* Last Page */}
+                    {currentPage < pagination.last_page - 2 && (
+                      <PaginationItem>
+                        <button
+                          className={`px-3 py-1 rounded-md ${currentPage === pagination.last_page ? "bg-gray-900 text-white" : "bg-gray-200"}`}
+                          onClick={() => setCurrentPage(pagination.last_page)}
+                        >
+                          {pagination.last_page}
+                        </button>
+                      </PaginationItem>
+                    )}
+
+                    {/* Next Button */}
                     <PaginationItem>
                       <button
-                        className="px-3 py-1 cursor-pointer rounded-md disabled:opacity-50"
-                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded-md disabled:opacity-50"
+                        disabled={currentPage === pagination.last_page}
                         onClick={() => setCurrentPage((prev) => prev + 1)}
                       >
                         Next
