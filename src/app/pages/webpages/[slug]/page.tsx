@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 import { apiBaseUrl, apiBaseRoot } from '@/config';
@@ -48,8 +48,6 @@ interface FilterType {
   product_types: Record<string, { id: number; name: string; slug: string }>;
   tags: Record<string, { id: number; name: string | null; slug: string | null }>;
 }
-
-// Custom Pagination Component with Dark Blue Theme
 const PaginationComponent = ({
   currentPage,
   totalPages,
@@ -70,8 +68,6 @@ const PaginationComponent = ({
   if (endPage - startPage + 1 < maxVisiblePages) {
     startPage = Math.max(1, endPage - maxVisiblePages + 1);
   }
-
-  // Previous button
   pages.push(
     <button
       key="prev"
@@ -86,8 +82,6 @@ const PaginationComponent = ({
       <span className="sr-only">Previous</span>
     </button>
   );
-
-  // First page and ellipsis if needed
   if (startPage > 1) {
     pages.push(
       <button
@@ -110,8 +104,6 @@ const PaginationComponent = ({
       );
     }
   }
-
-  // Page numbers
   for (let i = startPage; i <= endPage; i++) {
     pages.push(
       <button
@@ -126,8 +118,6 @@ const PaginationComponent = ({
       </button>
     );
   }
-
-  // Last page and ellipsis if needed
   if (endPage < totalPages) {
     if (endPage < totalPages - 1) {
       pages.push(
@@ -150,8 +140,6 @@ const PaginationComponent = ({
       </button>
     );
   }
-
-  // Next button
   pages.push(
     <button
       key="next"
@@ -178,7 +166,6 @@ const PaginationComponent = ({
     </div>
   );
 };
-
 const ProductCardSkeleton = () => (
   <div className="flex flex-col space-y-3">
     <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -199,8 +186,6 @@ export default function WebPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [perPage] = useState(12);
-
-  // Filters
   const [filters, setFilters] = useState<FilterType>({
     price: { min: 0, max: 0 },
     brands: {},
@@ -218,12 +203,6 @@ export default function WebPage() {
     price: { min: 0, max: -1 },
   });
 
-  // Create a ref to track the latest selected filters
-  const selectedFiltersRef = useRef(selectedFilters);
-  useEffect(() => {
-    selectedFiltersRef.current = selectedFilters;
-  }, [selectedFilters]);
-
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -232,41 +211,29 @@ export default function WebPage() {
         page: currentPage.toString(),
         filters: 'true',
       };
-
-      // Use the ref to get the latest filter values
-      const currentFilters = selectedFiltersRef.current;
-
-      // Apply filters
-      if (currentFilters.product_types.length > 0) {
-        params.product_types = currentFilters.product_types.join(',');
+      if (selectedFilters.product_types.length > 0) {
+        params.product_types = selectedFilters.product_types.join(',');
       }
-      if (currentFilters.sizes.length > 0) {
-        params.sizes = currentFilters.sizes.join(',');
+      if (selectedFilters.sizes.length > 0) {
+        params.sizes = selectedFilters.sizes.join(',');
       }
-      if (currentFilters.colors.length > 0) {
-        params.colors = currentFilters.colors.join(',');
+      if (selectedFilters.colors.length > 0) {
+        params.colors = selectedFilters.colors.join(',');
       }
-      if (currentFilters.brands.length > 0) {
-        params.brands = currentFilters.brands.join(',');
+      if (selectedFilters.brands.length > 0) {
+        params.brands = selectedFilters.brands.join(',');
       }
-      if (currentFilters.price.min >= 0) {
-        params.min_price = currentFilters.price.min.toString();
+      if (selectedFilters.price.min >= 0 && selectedFilters.price.max > selectedFilters.price.min) {
+        params.min_price = selectedFilters.price.min.toString();
+        params.max_price = selectedFilters.price.max.toString();
       }
-      if (currentFilters.price.max > currentFilters.price.min) {
-        params.max_price = currentFilters.price.max.toString();
-      }
-
       const pageRes = await axios.get(`${apiBaseUrl}web-pages/${slug}`, { params });
       if (!pageRes.data.success) throw new Error('Page not found');
-
       setWebPage(pageRes.data.data.page);
       setProducts(pageRes.data.data.products || []);
-      
-      // Set total pages for pagination
       if (pageRes.data.data.pagination) {
         setTotalPages(pageRes.data.data.pagination.last_page || 1);
       } else {
-        // Fallback if pagination data is not available
         const productCount = pageRes.data.data.products?.length || 0;
         setTotalPages(Math.ceil(productCount / perPage) || 1);
       }
@@ -281,17 +248,6 @@ export default function WebPage() {
           product_types: apiFilters.product_types || {},
           tags: apiFilters.tags || {},
         });
-
-        // Initialize price range in selected filters
-        if (apiFilters.price) {
-          setSelectedFilters(prev => ({
-            ...prev,
-            price: {
-              min: apiFilters.price.min,
-              max: apiFilters.price.max,
-            },
-          }));
-        }
       }
 
       setError(null);
@@ -301,15 +257,16 @@ export default function WebPage() {
     } finally {
       setLoading(false);
     }
-  }, [slug, currentPage, perPage]);
-
-  // Create a debounced version of fetchData
+  }, [slug, currentPage, perPage, selectedFilters]);
   const debouncedFetchData = useMemo(
     () => debounce(fetchData, 300),
     [fetchData]
   );
-
-  // Effect for initial load and filter changes
+  useEffect(() => {
+    if (slug) {
+      fetchData();
+    }
+  }, [slug]); 
   useEffect(() => {
     if (slug) {
       debouncedFetchData();
@@ -318,14 +275,7 @@ export default function WebPage() {
     return () => {
       debouncedFetchData.cancel();
     };
-  }, [slug, debouncedFetchData]);
-
-  // Effect for page changes only
-  useEffect(() => {
-    if (slug) {
-      fetchData();
-    }
-  }, [currentPage, fetchData, slug]);
+  }, [slug, debouncedFetchData, currentPage, selectedFilters]);
 
   const resetFilters = () => {
     setSelectedFilters({
@@ -333,7 +283,7 @@ export default function WebPage() {
       sizes: [],
       colors: [],
       brands: [],
-      price: { min: filters.price.min, max: filters.price.max },
+      price: { min: 0, max: -1 }, 
     });
     setCurrentPage(1);
   };
@@ -346,7 +296,7 @@ export default function WebPage() {
       if (type === 'price') {
         return {
           ...prev,
-          price: { min: filters.price.min, max: filters.price.max },
+          price: { min: 0, max: -1 }, 
         };
       } else if (Array.isArray(prev[type])) {
         return {
@@ -384,14 +334,11 @@ export default function WebPage() {
     selectedFilters.sizes.length > 0 ||
     selectedFilters.colors.length > 0 ||
     selectedFilters.brands.length > 0 ||
-    (selectedFilters.price.min !== filters.price.min ||
-      selectedFilters.price.max !== filters.price.max);
+    (selectedFilters.price.max !== -1); 
 
   const imageUrl = webPage?.image_large
     ? `${apiBaseRoot}assets/images/${webPage.image_large}`
     : null;
-
-  // Convert filter objects to arrays for the sidebar
   const filterArrays = useMemo(() => ({
     product_types: Object.values(filters.product_types).map(type => ({
       id: type.id.toString(),
@@ -411,6 +358,7 @@ export default function WebPage() {
     })),
     price: filters.price,
   }), [filters]);
+
   return (
     <div>
       {webPage && (
@@ -519,8 +467,8 @@ export default function WebPage() {
                   </motion.button>
                 </div>
               ))}
-              {(selectedFilters.price.min !== filters.price.min ||
-                selectedFilters.price.max !== filters.price.max) && (
+              {/* Only show price filter if it's actively set by user */}
+              {selectedFilters.price.max !== -1 && (
                 <div className="flex py-1.5 items-center bg-gray-200 rounded-lg px-3">
                   <span>{`£${selectedFilters.price.min} - £${selectedFilters.price.max}`}</span>
                   <button
@@ -557,7 +505,7 @@ export default function WebPage() {
                 ))}
               </div>
               
-              {/* Pagination */}
+             
               <PaginationComponent
                 currentPage={currentPage}
                 totalPages={totalPages}
