@@ -11,6 +11,11 @@ import FilterSidebar from '@/components/product/filter-sidebar';
 import { Button } from '@/components/ui/button';
 import { IoCloseSharp, IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import { debounce } from 'lodash';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from '@/components/ui/pagination';
 
 interface WebPageType {
   id: number;
@@ -48,124 +53,14 @@ interface FilterType {
   product_types: Record<string, { id: number; name: string; slug: string }>;
   tags: Record<string, { id: number; name: string | null; slug: string | null }>;
 }
-const PaginationComponent = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) => {
-  if (totalPages <= 1) return null;
 
-  const pages = [];
-  const maxVisiblePages = 5;
-  
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-  
-  if (endPage - startPage + 1 < maxVisiblePages) {
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-  }
-  pages.push(
-    <button
-      key="prev"
-      onClick={() => onPageChange(currentPage - 1)}
-      disabled={currentPage === 1}
-      className={`flex items-center justify-center px-3 h-10 ms-0 leading-tight border border-gray-300 rounded-s-lg
-        ${currentPage === 1 
-          ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700' 
-          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
-    >
-      <IoChevronBack className="w-4 h-4" />
-      <span className="sr-only">Previous</span>
-    </button>
-  );
-  if (startPage > 1) {
-    pages.push(
-      <button
-        key={1}
-        onClick={() => onPageChange(1)}
-        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
-          ${1 === currentPage 
-            ? 'bg-blue-800 text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
-            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
-      >
-        1
-      </button>
-    );
-    
-    if (startPage > 2) {
-      pages.push(
-        <span key="ellipsis1" className="flex items-center justify-center px-2 h-10 leading-tight text-gray-500 dark:text-gray-400">
-          ...
-        </span>
-      );
-    }
-  }
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(
-      <button
-        key={i}
-        onClick={() => onPageChange(i)}
-        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
-          ${i === currentPage 
-            ? 'bg-black text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
-            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
-      >
-        {i}
-      </button>
-    );
-  }
-  if (endPage < totalPages) {
-    if (endPage < totalPages - 1) {
-      pages.push(
-        <span key="ellipsis2" className="flex items-center justify-center px-2 h-10 leading-tight text-gray-500 dark:text-gray-400">
-          ...
-        </span>
-      );
-    }
-    
-    pages.push(
-      <button
-        key={totalPages}
-        onClick={() => onPageChange(totalPages)}
-        className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300
-          ${totalPages === currentPage 
-            ? 'bg-blue-800 text-white border-blue-800 dark:border-blue-700 dark:bg-blue-700' 
-            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
-      >
-        {totalPages}
-      </button>
-    );
-  }
-  pages.push(
-    <button
-      key="next"
-      onClick={() => onPageChange(currentPage + 1)}
-      disabled={currentPage === totalPages}
-      className={`flex items-center justify-center px-3 h-10 leading-tight border border-gray-300 rounded-e-lg
-        ${currentPage === totalPages 
-          ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700' 
-          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}`}
-    >
-      <IoChevronForward className="w-4 h-4" />
-      <span className="sr-only">Next</span>
-    </button>
-  );
+interface PaginationProps {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
 
-  return (
-    <div className="flex flex-col items-center mt-8">
-      <div className="flex text-base">
-        {pages}
-      </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-        Showing page {currentPage} of {totalPages}
-      </p>
-    </div>
-  );
-};
 const ProductCardSkeleton = () => (
   <div className="flex flex-col space-y-3">
     <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -183,9 +78,6 @@ export default function WebPage() {
   const [products, setProducts] = useState<ProductBase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [perPage] = useState(12);
   const [filters, setFilters] = useState<FilterType>({
     price: { min: 0, max: 0 },
     brands: {},
@@ -203,14 +95,20 @@ export default function WebPage() {
     price: { min: 0, max: -1 },
   });
 
+  // Pagination state
+  const [pagination, setPagination] = useState<PaginationProps | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage] = useState(12);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const params: Record<string, string> = {
+        filters: 'true',
         per_page: perPage.toString(),
         page: currentPage.toString(),
-        filters: 'true',
       };
+      
       if (selectedFilters.product_types.length > 0) {
         params.product_types = selectedFilters.product_types.join(',');
       }
@@ -227,15 +125,16 @@ export default function WebPage() {
         params.min_price = selectedFilters.price.min.toString();
         params.max_price = selectedFilters.price.max.toString();
       }
+      
       const pageRes = await axios.get(`${apiBaseUrl}web-pages/${slug}`, { params });
       if (!pageRes.data.success) throw new Error('Page not found');
+      
       setWebPage(pageRes.data.data.page);
       setProducts(pageRes.data.data.products || []);
+      
+      // Set pagination data if available
       if (pageRes.data.data.pagination) {
-        setTotalPages(pageRes.data.data.pagination.last_page || 1);
-      } else {
-        const productCount = pageRes.data.data.products?.length || 0;
-        setTotalPages(Math.ceil(productCount / perPage) || 1);
+        setPagination(pageRes.data.data.pagination);
       }
 
       if (pageRes.data.data.filters) {
@@ -257,16 +156,19 @@ export default function WebPage() {
     } finally {
       setLoading(false);
     }
-  }, [slug, currentPage, perPage, selectedFilters]);
+  }, [slug, selectedFilters, currentPage, perPage]);
+  
   const debouncedFetchData = useMemo(
     () => debounce(fetchData, 300),
     [fetchData]
   );
+  
   useEffect(() => {
     if (slug) {
       fetchData();
     }
   }, [slug]); 
+  
   useEffect(() => {
     if (slug) {
       debouncedFetchData();
@@ -275,7 +177,7 @@ export default function WebPage() {
     return () => {
       debouncedFetchData.cancel();
     };
-  }, [slug, debouncedFetchData, currentPage, selectedFilters]);
+  }, [slug, debouncedFetchData, selectedFilters, currentPage]);
 
   const resetFilters = () => {
     setSelectedFilters({
@@ -339,6 +241,7 @@ export default function WebPage() {
   const imageUrl = webPage?.image_large
     ? `${apiBaseRoot}assets/images/${webPage.image_large}`
     : null;
+    
   const filterArrays = useMemo(() => ({
     product_types: Object.values(filters.product_types).map(type => ({
       id: type.id.toString(),
@@ -467,7 +370,6 @@ export default function WebPage() {
                   </motion.button>
                 </div>
               ))}
-              {/* Only show price filter if it's actively set by user */}
               {selectedFilters.price.max !== -1 && (
                 <div className="flex py-1.5 items-center bg-gray-200 rounded-lg px-3">
                   <span>{`£${selectedFilters.price.min} - £${selectedFilters.price.max}`}</span>
@@ -505,12 +407,99 @@ export default function WebPage() {
                 ))}
               </div>
               
-             
-              <PaginationComponent
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              {/* Pagination Component */}
+              {pagination && pagination.last_page > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      {/* Previous Button */}
+                      <PaginationItem>
+                        <button
+                          className="px-3 py-1 rounded-md disabled:opacity-50"
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage((prev) => prev - 1)}
+                        >
+                          Previous
+                        </button>
+                      </PaginationItem>
+
+                      {/* First Page */}
+                      {currentPage > 3 && (
+                        <PaginationItem>
+                          <button
+                            className={`px-3 py-1 rounded-md ${currentPage === 1 ? "bg-gray-900 text-white" : "bg-gray-200"}`}
+                            onClick={() => setCurrentPage(1)}
+                          >
+                            1
+                          </button>
+                        </PaginationItem>
+                      )}
+
+                      {/* Ellipsis before current page if needed */}
+                      {currentPage > 4 && (
+                        <PaginationItem>
+                          <span className="px-3 py-1">...</span>
+                        </PaginationItem>
+                      )}
+
+                      {/* Pages around current page */}
+                      {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
+                        let pageNum;
+                        if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= pagination.last_page - 2) {
+                          pageNum = pagination.last_page - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        if (pageNum < 1 || pageNum > pagination.last_page) return null;
+
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <button
+                              className={`px-3 py-1 rounded-md ${currentPage === pageNum ? "bg-gray-900 text-white" : "bg-gray-200"}`}
+                              onClick={() => setCurrentPage(pageNum)}
+                            >
+                              {pageNum}
+                            </button>
+                          </PaginationItem>
+                        );
+                      })}
+
+                      {/* Ellipsis after current page if needed */}
+                      {currentPage < pagination.last_page - 3 && (
+                        <PaginationItem>
+                          <span className="px-3 py-1">...</span>
+                        </PaginationItem>
+                      )}
+
+                      {/* Last Page */}
+                      {currentPage < pagination.last_page - 2 && (
+                        <PaginationItem>
+                          <button
+                            className={`px-3 py-1 rounded-md ${currentPage === pagination.last_page ? "bg-gray-900 text-white" : "bg-gray-200"}`}
+                            onClick={() => setCurrentPage(pagination.last_page)}
+                          >
+                            {pagination.last_page}
+                          </button>
+                        </PaginationItem>
+                      )}
+
+                      {/* Next Button */}
+                      <PaginationItem>
+                        <button
+                          className="px-3 py-1 rounded-md disabled:opacity-50"
+                          disabled={currentPage === pagination.last_page}
+                          onClick={() => setCurrentPage((prev) => prev + 1)}
+                        >
+                          Next
+                        </button>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </>
           ) : (
             <div className="text-center py-10">
