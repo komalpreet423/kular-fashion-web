@@ -27,6 +27,15 @@ import { Product } from "@/types/product";
 import { Filter, PaginationProps } from "@/types/filter";
 import axios from 'axios';
 
+// Add sort option type
+export type SortOption = 
+  | "price_low_high" 
+  | "price_high_low" 
+  | "name_a_z" 
+  | "name_z_a" 
+  | "newest"
+  | "all_products";
+
 const ProductCardSkeleton = () => (
   <div className="flex flex-col space-y-3">
     <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -74,6 +83,7 @@ export default function ProductsPage() {
   const [perPage, setPerPage] = useState(12);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<Boolean>(true);
+  const [sortBy, setSortBy] = useState<SortOption>("all_products"); 
 
   const memoizedSelectedFilters = useMemo(
     () => selectedFilters,
@@ -95,6 +105,11 @@ export default function ProductsPage() {
         per_page: perPage.toString(),
         page: currentPage.toString(),
       };
+
+      // Add sort parameter if selected
+      if (sortBy !== "all_products") {
+        params.sort_by = sortBy;
+      }
 
       // Only add filter params if they have values
       if (selectedFilters.product_types.length > 0) {
@@ -181,10 +196,11 @@ export default function ProductsPage() {
   useEffect(() => {
     debouncedFetchProducts();
     return () => debouncedFetchProducts.cancel();
-  }, [currentPage, memoizedSelectedFilters]);
+  }, [currentPage, memoizedSelectedFilters, sortBy]); 
 
-  const handleSortChange = (option: string) => {
-    // Add your sorting logic here
+  const handleSortChange = (option: SortOption) => {
+    setSortBy(option);
+    setCurrentPage(1);
   };
 
   const resetFilters = () => {
@@ -195,6 +211,11 @@ export default function ProductsPage() {
       brands: [],
       price: { min: filters.price.min, max: filters.price.max },
     });
+    setCurrentPage(1);
+  };
+
+  const resetSorting = () => {
+    setSortBy("all_products");
     setCurrentPage(1);
   };
 
@@ -263,6 +284,8 @@ export default function ProductsPage() {
       selectedFilters.price.max !== filters.price.max) &&
       selectedFilters.price.max >= 0);
 
+  const isSortingSelected = sortBy !== "all_products";
+
   return (
     <div className="flex flex-col md:flex-row gap-4 p-4">
       {error ? (
@@ -313,33 +336,34 @@ export default function ProductsPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant={"secondary"} size={"sm"}>
-                          Sort By: Price: Low to High
+                          Sort By: {
+                            sortBy === "price_low_high" ? "Price: Low to High" :
+                            sortBy === "price_high_low" ? "Price: High to Low" :
+                            sortBy === "name_a_z" ? "Name: A to Z" :
+                            sortBy === "name_z_a" ? "Name: Z to A" :
+                            sortBy === "newest" ? "Newest" :
+                            "All Products"
+                          }
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onClick={() => handleSortChange("Price: Low to High")}
-                        >
+                         <DropdownMenuItem onClick={() => handleSortChange("all_products")}>
+                          All Products 
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSortChange("price_low_high")}>
                           Price: Low to High
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleSortChange("Price: High to Low")}
-                        >
+                        <DropdownMenuItem onClick={() => handleSortChange("price_high_low")}>
                           Price: High to Low
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleSortChange("Rating: High to Low")
-                          }
-                        >
-                          Rating: High to Low
+                        <DropdownMenuItem onClick={() => handleSortChange("name_a_z")}>
+                          Name: A to Z
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleSortChange("Availability: In Stock")
-                          }
-                        >
-                          Availability: In Stock
+                        <DropdownMenuItem onClick={() => handleSortChange("name_z_a")}>
+                          Name: Z to A
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSortChange("newest")}>
+                          Newest
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -347,7 +371,7 @@ export default function ProductsPage() {
                 </div>
 
                 <div className="mb-4">
-                  {isAnyFilterSelected && (
+                  {(isAnyFilterSelected || isSortingSelected) && (
                     <div className="flex flex-wrap gap-3 mt-2">
                       {selectedFilters.product_types.map((categoryId) => (
                         <div
@@ -468,12 +492,35 @@ export default function ProductsPage() {
                             </button>
                           </div>
                         )}
+                      {isSortingSelected && (
+                        <div className="flex py-1.5 items-center bg-blue-100 dark:bg-blue-900 rounded-lg px-3 transition-all duration-300 ease-in-out hover:bg-blue-200 dark:hover:bg-blue-800">
+                          <span className="text-sm text-blue-800 dark:text-blue-200">
+                            Sorted: {
+                              sortBy === "price_low_high" ? "Price: Low to High" :
+                              sortBy === "price_high_low" ? "Price: High to Low" :
+                              sortBy === "name_a_z" ? "Name: A to Z" :
+                              sortBy === "name_z_a" ? "Name: Z to A" :
+                              sortBy === "newest" ? "Newest" :
+                              "all_products"
+                            }
+                          </span>
+                          <button
+                            className="ml-2 text-red-500 cursor-pointer hover:text-red-600 transition duration-300"
+                            onClick={resetSorting}
+                          >
+                            <IoCloseSharp />
+                          </button>
+                        </div>
+                      )}
                       <Button
-                        onClick={resetFilters}
+                        onClick={() => {
+                          resetFilters();
+                          resetSorting();
+                        }}
                         size="md"
                         variant={"secondary"}
                       >
-                        Clear Filters
+                        Clear All
                       </Button>
                     </div>
                   )}
